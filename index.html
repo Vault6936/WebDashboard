@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="./css/main.css"></head>
+<body onload="initialize()">
+    <div id="menu">
+        <div id="menu-button-wrapper">
+            <div class="dropdown">
+                <button class="dropdown-button">File</button>
+                <div class="dropdown-container">
+                    <a class="dropdown-option">customize layout</a>
+                    <a class="dropdown-option">save layout</a>
+                    <a class="dropdown-option">open layout</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-button">Edit</button>
+                <div class="dropdown-container">
+                    <a class="dropdown-option">save layout</a>
+                    <a class="dropdown-option">open layout</a>
+                    <a class="dropdown-option" onclick="addDiv()">add element</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-button">Options</button>
+                <div class="dropdown-container">
+                    <a class="dropdown-option">save layout</a>
+                    <a class="dropdown-option">open layout</a>
+                </div>
+            </div>
+            <div id="transition"></div>
+        </div>
+    </div>
+    <div id="whiteboard"></div>
+    <div id="options">
+        <button id="close"></button>    
+    </div>
+    <script type="text/javascript" src="./javascript/main.js"></script>
+</body>
+</html>
