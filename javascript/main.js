@@ -8,6 +8,8 @@ var mouseVector = new Vector2d(0, 0);
 var dragOffset = new Vector2d(0, 0);
 function initialize() {
     whiteboard = document.getElementById("whiteboard");
+    settings = document.getElementById("settings");
+    clickBlocker = document.getElementById("settings-background");
     window.addEventListener("mousemove", (event) => {mouseVector = new Vector2d(event.clientX, event.clientY)});
     window.oncontextmenu = function() {return false};
 }
@@ -26,4 +28,14 @@ function addDiv() {
     div.onmousedown = function() {dragOffset = new Vector2d(mouseVector.x - div.getBoundingClientRect().left, mouseVector.y - div.getBoundingClientRect().top); window.addEventListener("mousemove", drag)};
     div.onmouseup = () => window.removeEventListener("mousemove", drag);
     whiteboard.appendChild(div);
+}
+function openSettings() {
+    settings.style.display = "block";
+    clickBlocker.style.display = "block";
+    settings.setAttribute("z-index", "1");
+    clickBlocker.setAttribute("z-index: 0");
+}
+function closeSettings() {
+    settings.style.display = "none";
+    clickBlocker.style.display = "none";
 }

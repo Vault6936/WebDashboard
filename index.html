@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<link rel="stylesheet" href="./css/main.css"></head>
+    <title>Web Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="./images/Logo.png">
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+
 <body onload="initialize()">
     <div id="menu">
         <div id="menu-button-wrapper">
@@ -24,17 +29,20 @@
             <div class="dropdown">
                 <button class="dropdown-button">Options</button>
                 <div class="dropdown-container">
-                    <a class="dropdown-option">save layout</a>
-                    <a class="dropdown-option">open layout</a>
+                    <a class="dropdown-option" onclick="openSettings()">settings</a>
                 </div>
             </div>
             <div id="transition"></div>
         </div>
     </div>
     <div id="whiteboard"></div>
-    <div id="options">
-        <button id="close"></button>    
+    <div id="settings-background">
     </div>
+    <div id="settings">
+        <img src="./images/close.svg" id="close" onclick="closeSettings()"></img>
+    </div>
+
     <script type="text/javascript" src="./javascript/main.js"></script>
 </body>
+
 </html>
