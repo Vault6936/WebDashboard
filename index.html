@@ -8,6 +8,7 @@
 </head>
 
 <body onload="initialize()">
+    <input type="file">Click me</input>
     <div id="menu">
         <div id="menu-button-wrapper">
             <div class="dropdown">
@@ -21,25 +22,33 @@
             <div class="dropdown">
                 <button class="dropdown-button">Edit</button>
                 <div class="dropdown-container">
-                    <a class="dropdown-option">save layout</a>
-                    <a class="dropdown-option">open layout</a>
-                    <a class="dropdown-option" onclick="addDiv()">add element</a>
+                    <a class="dropdown-option">Undo</a>
+                    <a class="dropdown-option">Redo</a>
+                    <a class="dropdown-option" id="editingToggle" onclick="toggleEditingMode()">turn on editing mode</a>
+                    <a class="dropdown-option" onclick="addDraggable()">add element</a>
                 </div>
             </div>
             <div class="dropdown">
                 <button class="dropdown-button">Options</button>
                 <div class="dropdown-container">
-                    <a class="dropdown-option" onclick="openSettings()">settings</a>
+                    <a class="dropdown-option" popup="settings">settings</a>
                 </div>
             </div>
             <div id="transition"></div>
         </div>
     </div>
     <div id="whiteboard"></div>
-    <div id="settings-background">
+    <div id="popup-background">
     </div>
-    <div id="settings">
-        <img src="./images/close.svg" id="close" onclick="closeSettings()"></img>
+    <div id="settings" class="popup">
+        <img src="./images/close.svg" class="close"></img>
+    </div>
+    <a id="open-color-picker" style="display: none" popup="color-picker"></a>
+    <div id="color-picker" class="popup">
+        <img src="./images/close.svg" class="close"></img>
+        <div class="popup-content">
+            <input type="text" placeholder="#000000"></input>
+        </div>
     </div>
 
     <script type="text/javascript" src="./javascript/main.js"></script>
