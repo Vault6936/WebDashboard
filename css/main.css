@@ -190,3 +190,12 @@
 .popup-content {
     display: none;
 }
+
+.popup-input {
+    
+}
+
+.popup-displayed { /*is added to the popup class list upon display*/
+    /*min-width: 500px;
+    min-height: 400px;*/
+}

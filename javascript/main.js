@@ -7,6 +7,7 @@ class Vector2d {
 var mouseVector = new Vector2d(0, 0);
 var dragOffset = new Vector2d(0, 0);
 var elementEditing = false;
+var openPopup; //global variable containing the popup element that is currently open
 function initialize() {
     whiteboard = document.getElementById("whiteboard");
     settings = document.getElementById("settings");
@@ -90,12 +91,15 @@ function toggleEditingMode() {
 }
 function openPopup(target) {
     popup = document.getElementById(target.getAttribute("popup"));
+    openPopup = popup;
     closeBtn = popup.getElementsByClassName("close")[0];
     if (popup.id == "settings") {
         setSize(popup, 75, 75, false);
     } else {
         setSize(popup, 50, 50, false);
     }
+
+    popup.classList.add("popup-displayed");
     
     popup.setAttribute("z-index", "1");
     closeBtn.style.display = "block";
@@ -109,7 +113,9 @@ function openPopup(target) {
 }
 function closePopup(target) {
     popup = target.parentElement;
+    openPopup = null;
     setSize(popup, 0, 0, false);
+    popup.classList.remove("popup-displayed");
     popupBackground.style.display = "none";
     target.style.display = "none";
     popup.getElementsByClassName("popup-content")[0].style.display = "none";
@@ -144,10 +150,15 @@ function generateRightClickMenu(event) {
     container.id = "menu-container";
     container.style = "left: " + mouseVector.x + "px; top: " + mouseVector.y + "px";
     if (event.target.className == "whiteboard-draggable") {
-        generateMenuButton(container, "remove", () => draggable.parentElement.remove());
+        generateMenuButton(container, "remove", () => {if (elementEditing) draggable.parentElement.remove()});
         generateMenuButton(container, "set id");
         generateMenuButton(container, "set color", () => document.getElementById("open-color-picker").click());
         generateMenuButton(container, "set element type");
     }
     document.body.appendChild(container);
+}
+function changeColor(event) {
+    color = popup.getElementsByClassName("popup-input")[0].value;
+    event.target.style.background = color;
+    popup.getElementsByClassName("close")[0].click();
 }
