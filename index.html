@@ -43,15 +43,37 @@
     <div id="settings" class="popup">
         <img src="./images/close.svg" class="close"></img>
     </div>
+    <a id="open-id-changer" style="display: none" popup="id-changer"></a>
+    <div id="id-changer" class="popup">
+        <img src="./images/close.svg" class="close"></img>
+        <div class="popup-content">
+            <div id="color-input-wrapper">
+                <input type="text" placeholder="" class="popup-input"></input>
+            </div>
+            <div class="apply-container">
+                <button class="apply" onclick="changeID()">apply</button>
+            </div>
+        </div>
+    </div>
     <a id="open-color-picker" style="display: none" popup="color-picker"></a>
     <div id="color-picker" class="popup">
         <img src="./images/close.svg" class="close"></img>
         <div class="popup-content">
-            <input type="text" placeholder="#000000" class="popup-input"></input>
-            <button onclick="changeColor()">apply</button>
+            <div id="color-input-wrapper">
+                <input type="text" placeholder="#000000" class="popup-input"></input>
+            </div>
+            <div class="apply-container">
+                <button class="apply" onclick="changeColor()">apply</button>
+            </div>
         </div>
     </div>
+    <a id="open-type-changer" style="display: none" popup="type-changer"></a>
+    <div id="type-changer" class="popup">
+        <img src="./images/close.svg" class="close"></img>
+        <div class="popup-content">
 
+        </div>
+    </div>
     <script type="text/javascript" src="./javascript/main.js"></script>
 </body>
 
