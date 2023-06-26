@@ -4,7 +4,7 @@ class Vector2d {
         this.y = y;
     }
 }
-class whiteboardDraggable {
+class WhiteboardDraggable {
     constructor(name, size, position, color, type) {
         this.name = name;
         this.size = size;
@@ -16,18 +16,22 @@ class whiteboardDraggable {
         this.div = document.createElement("div");
         this.container = document.createElement("span");
         this.label = document.createElement("input");
+        this.arrayIndex = 0;
         this.initialize(this.div);
     }
     initialize(draggableDiv) {
         console.log(draggableDiv);
         draggableDiv.className = "whiteboard-draggable";
+        draggableDiv.background = this.color;
         var drag = function() {setDraggablePosition(draggableDiv, mouseVector)};
         draggableDiv.onmousedown = function(event) {dragOffset = new Vector2d(mouseVector.x - draggableDiv.getBoundingClientRect().left, mouseVector.y - draggableDiv.getBoundingClientRect().top); if (elementEditing && event.button === 0) window.addEventListener("mousemove", drag)};
         draggableDiv.onmouseup = () => window.removeEventListener("mousemove", drag);
         draggableDiv.onmouseover = (event) => {
-            if (elementEditing) {event.target.style.cursor = "move"} else if (this.type == "button") {event.target.style.cursor = "pointer"; event.target.classList.add("whiteboard-button")} else {event.target.style.cursor = "auto"}
+            if (elementEditing) {event.target.style.cursor = "move"} else if (this.type === "button") {event.target.style.cursor = "pointer"; event.target.style.background = "#ebebe0"} else {event.target.style.cursor = "auto"}
         }
-        draggableDiv.onmouseleave = (event) => {event.target.classList.remove("whiteboard-button")}
+        draggableDiv.onmouseleave = (event) => {event.target.classList.remove("whiteboard-button"), event.target.style.background = this.color}
+        var e = new Event("mouseleave");
+        draggableDiv.dispatchEvent(e);
         this.container.appendChild(draggableDiv);
         whiteboard.appendChild(this.container);
         this.label.setAttribute("type", "text");
@@ -39,6 +43,24 @@ class whiteboardDraggable {
         if (this.type == "button") {
             this.div.classList.add("whiteboard-button");
         }
+        this.updateIndex(draggables.length);
+    }
+    updateIndex(index) {
+        this.arrayIndex = index;
+        this.div.setAttribute("index", index);
+    }
+    delete() {
+        var temp = [];
+        var updatedIndex = 0;
+        for (var i = 0; i < draggables.length; i++) {
+            if (i != this.arrayIndex) {
+                temp.push(draggables[i]);
+                draggables[i].updateIndex(updatedIndex); //resets the index variable of the draggable so the draggable can find itself in the new draggables array
+                updatedIndex++;
+            }
+        }
+        draggables = temp;
+        this.div.parentElement.remove();
     }
 }
 var mouseVector = new Vector2d(0, 0);
@@ -84,7 +106,7 @@ function setDraggablePosition(draggable, pose){
     label.style.top = toHTMLPositionPX(y + draggable.clientHeight + 10);
 }
 function addDraggable() {
-    draggables.push(new whiteboardDraggable());
+    draggables.push(new WhiteboardDraggable("draggable", new Vector2d(0, 0), "25x25", "black", "button"));
 }
 function setSize(element, width, height, inPixels) {
     if ((window.innerHeight < 800 || window.innerWidth < 1300) && (width != 0)) {
@@ -142,11 +164,6 @@ function openPopup(target) {
     closeBtn.style.display = "block";
     popupBackground.style.display = "block";
     popupBackground.setAttribute("z-index", "0");
-    /*try {
-        popup.getElementsByClassName("popup-content")[0].style.display = "block";
-    } catch {
-        console.warn("no popup content to show");
-    }*/
 }
 function closePopup(target) {
     popup = target.parentElement;
@@ -193,7 +210,7 @@ function generateRightClickMenu(event) {
     container.id = "menu-container";
     container.style = "left: " + mouseVector.x + "px; top: " + mouseVector.y + "px";
     if (event.target.classList.contains("whiteboard-draggable") && elementEditing) {
-        generateMenuButton(container, "remove", () => {if (elementEditing) draggable.parentElement.remove()});
+        generateMenuButton(container, "remove", () => {if (elementEditing) draggables[draggable.getAttribute("index")].delete()});
         generateMenuButton(container, "set id", () => document.getElementById("open-id-changer").click());
         generateMenuButton(container, "set color", () => document.getElementById("open-color-picker").click());
         generateMenuButton(container, "set element type", () => document.getElementById("open-type-changer").click());
@@ -203,10 +220,12 @@ function generateRightClickMenu(event) {
 function changeID(event) {
     id = popup.getElementsByClassName("popup-input")[0].value;
     currentDraggable.id = id;
+    currentDraggable.title = "ID: " + id;
     popup.getElementsByClassName("close")[0].click();
 }
 function changeColor(event) {
     color = popup.getElementsByClassName("popup-input")[0].value;
     currentDraggable.style.background = color;
+    draggables[currentDraggable.getAttribute("index")].color = color;
     popup.getElementsByClassName("close")[0].click();
 }
