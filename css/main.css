@@ -9,6 +9,12 @@ body {
     height: 100%;
 }
 
+.default-text {
+    font-family: Roboto;
+    font-size: 15px; 
+    color: black;
+}
+
 #menu {
     user-select: none;
     position: fixed;
@@ -240,11 +246,6 @@ body {
     transform: translate(-50%, 0%);
 }
 
-.popup-displayed { /*is added to the popup class list upon display*/
-    /*min-width: 500px;
-    min-height: 400px;*/
-}
-
 #color-input-wrapper {
     display: inline-block;
     position: absolute;
@@ -253,4 +254,45 @@ body {
     top: 0px;
     bottom: 0px;
     margin: auto;
+}
+
+#layout-input-wrapper {
+    margin-top: 50px;
+}
+
+#select-json-container {
+    position: absolute;
+    right: 0px;
+    left: 0px;
+    top: 0px;
+    bottom: 0px;
+    margin: auto;
+    width: 250px;
+    height: min-content;
+}
+
+.selectable-carousel-container {
+    display: grid;
+    grid-template-columns: 250px;
+    grid-template-rows: min-content;
+    max-height: calc(100% - 50px);
+    overflow: scroll;
+    background-color: #ebebe0;
+}
+
+.carousel-item {
+    background-color: #ebebe0;
+    text-align: center;
+}
+
+.selectable {
+    cursor: pointer;
+    user-select: none; /* I love the irony :) */
+    height: 20px;
+}
+
+.selectable:hover {
+    background-color: black;
+    color: #ebebe0;
+    transition: all 0.2s ease-in;
 }
