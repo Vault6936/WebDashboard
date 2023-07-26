@@ -64,7 +64,7 @@ class WhiteboardDraggable {
     delete() {
         var temp = [];
         var updatedIndex = 0;
-        for (var i = 0; i < draggables.length; i++) {
+        for (let i = 0; i < draggables.length; i++) {
             if (i != this.arrayIndex) {
                 temp.push(draggables[i]);
                 draggables[i].updateIndex(updatedIndex); //resets the index variable of the draggable so the draggable can find itself in the new draggables array
@@ -109,7 +109,7 @@ function getBorderWidth(element) {
 function getDraggableIndex(draggable) {
     return parseInt(draggable.getAttribute("index"));
 }
-function addDraggable() {
+function addDefaultDraggable() {
     draggables.push(new WhiteboardDraggable("", new Vector2d(100, 100), "25x25", "black", "button"));
 }
 function setSize(element, width, height, inPixels) {
@@ -275,8 +275,9 @@ function selectJSON(event) {
 function openJSON(key) {
     let data = JSON.parse(localStorage.getItem(key));
     activePopup.getElementsByClassName("close")[0].click();
-    for (let i = 0; i < draggables.length; i++) {
-        draggables[i].delete();
+    iterations = draggables.length; //must be set here, because calling delete() continually updates draggables.length
+    for (let i = 0; i < iterations; i++) {
+        draggables[0].delete(); //Every time delete() is called, a new draggable will fall into the 0 slot in the array
     }
     for (let i = 0; i < data.length; i++) {
         let name = data[i].name;
