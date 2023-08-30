@@ -8,7 +8,6 @@
 </head>
 
 <body onload="initialize()">
-    <input type="file">Click me</input>
     <div id="menu">
         <div id="menu-button-wrapper">
             <div class="dropdown">
@@ -25,6 +24,7 @@
                 <div class="dropdown-container">
                     <a class="dropdown-option">Undo</a>
                     <a class="dropdown-option">Redo</a>
+                    <a class="dropdown-option" onclick="clearLayout()">clear layout</a>
                     <a class="dropdown-option" id="editingToggle" onclick="toggleEditingMode()">turn on editing mode</a>
                     <a class="dropdown-option" onclick="addDefaultDraggable()">add element</a>
                 </div>
@@ -39,16 +39,18 @@
         </div>
     </div>
     <div id="whiteboard"></div>
-    <div id="popup-background">
-    </div>
+
+    <div id="layout-name-container"><p id="layout-name" class="default-text">default layout</p></div>
+    <div id="popup-background"></div>
+
     <div id="settings" class="popup">
         <img src="./images/close.svg" class="close"></img>
         <div class="popup-content">
             <div id="websocket-url-input-wrapper">
-                <input type="text" placeholder="ws://127.0.0.1:5800" class="popup-input"></input>
+                <input type="text" placeholder="ws://127.0.0.1:5800" class="popup-input" id="websocketURL"></input>
             </div>
             <div class="apply-container">
-                <button class="apply" onclick="">apply</button>
+                <button class="apply" onclick="saveSettings()">apply</button>
             </div>
         </div>
     </div>
@@ -102,6 +104,18 @@
             </div>
             <div class="apply-container">
                 <button class="apply" onclick="changeColor()">apply</button>
+            </div>
+        </div>
+    </div>
+    <a id="open-size-picker" style="display: none" popup="size-picker"></a>
+    <div id="size-picker" class="popup">
+        <img src="./images/close.svg" class="close"></img>
+        <div class="popup-content">
+            <div id="size-input-wrapper">
+                <input type="text" placeholder="100x100" class="popup-input"></input>
+            </div>
+            <div class="apply-container">
+                <button class="apply" onclick="setDraggableSize()">apply</button>
             </div>
         </div>
     </div>
