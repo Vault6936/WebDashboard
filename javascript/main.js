@@ -16,6 +16,7 @@ class WhiteboardDraggable {
         this.type = type == null ? "button" : type;
         this.div = document.createElement("div");
 
+
         this.draggingDiv = false;
 
         var draggableDiv = this.div; // Evidently, Javascript lambdas do not like references to 'this' when they are declared.  Using an intermediate variable works.
@@ -27,7 +28,12 @@ class WhiteboardDraggable {
         this.updateIndex(draggables.length);
         this.div.className = "whiteboard-draggable";
         this.div.background = this.color;
+
+        this.setSize(this.size);
+
         let drag = () => this.setDraggablePosition(draggableDiv, mouseVector);
+
+        
 
         this.div.onmousedown = function(event) {
             if (elementEditing && event.button === 0) {
@@ -87,7 +93,6 @@ class WhiteboardDraggable {
     }
     setSize(size) {
         this.size = new Vector2d(clamp(size.x, 50, whiteboard.clientWidth * 0.75), clamp(size.y, 50, whiteboard.clientHeight * 0.75));
-        console.log(size);
         this.div.style.width = toHTMLPositionPX(this.size.x);
         this.div.style.height = toHTMLPositionPX(this.size.y);
         this.label.style.width = toHTMLPositionPX(clamp(this.size.x * 0.75, 75, Number.POSITIVE_INFINITY));        
