@@ -17,6 +17,7 @@
                     <a class="dropdown-option" onclick="defaultSave()">save layout</a>
                     <a class="dropdown-option" popup="save-layout" title="Note that since this program uses local storage, data will not carry over to a different browser.  Your settings will not be saved in Firefox if you created them in Chrome!">save layout as</a>
                     <a class="dropdown-option" onclick="selectJSON(event)" popup="open-layout">open layout</a>
+                    <a class="dropdown-option" popup="clear-storage">clear storage</a>
                 </div>
             </div>
             <div class="dropdown">
@@ -33,6 +34,7 @@
                 <button class="dropdown-button">Options</button>
                 <div class="dropdown-container">
                     <a class="dropdown-option" popup="settings">settings</a>
+                    <a class="dropdown-option" onclick="">full screen</a>
                 </div>
             </div>
             <div id="transition"></div>
@@ -58,7 +60,7 @@
         <img src="./images/close.svg" class="close"></img>
         <div class="popup-content">
             <div id="layout-input-wrapper">
-                <input type="text" placeholder="Enter the name of your layout" class="popup-input"></input>
+                <input type="text" placeholder="Enter the name of your layout" class="popup-input" style="width: 250px"></input>
             </div>
             <div class="apply-container">
                 <button class="apply" onclick="saveJSON()">Save</button>
@@ -69,17 +71,16 @@
         <img src="./images/close.svg" class="close"></img>
         <div class="popup-content">
             <div class="selectable-carousel-container" id="select-json-container"></div>
-            <div class="apply-container">
-                <button class="apply" onclick="openJSON()">Open</button>
-            </div>
         </div>
     </div>
     <div id="clear-storage" class="popup">
         <img src="./images/close.svg" class="close"></img>
         <div class="popup-content">
-            <p id="prompt">Are you sure you want to </p>
+            <div class="prompt-container">
+                <p class="prompt">Are you sure you want to delete all layouts?</p>
+            </div>
             <div class="apply-container">
-                <button class="apply" onclick="openJSON()"></button>
+                <button class="apply" onclick="removeAllLayouts()">Yes, nuke them all!</button>
             </div>
         </div>
     </div>

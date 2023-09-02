@@ -346,8 +346,8 @@ body {
     height: max-content;
     padding-top: 3px;
     padding-bottom: 3px;
-    padding-right: 7px;
-    padding-left: 7px;
+    padding-right: 15px;
+    padding-left: 15px;
     background-color: black;
 }
 
@@ -356,5 +356,24 @@ body {
     font-size: 15px;
     color: #ebebe0;
     user-select: none;
+}
+
+.prompt-container {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+    margin: auto;
+    align-self: center;
+    max-width: 95%;
+    height: min-content;
+}
+
+.prompt {
+    font-family: "Roboto";
+    font-size: 25px;
+    color: #ebebe0;
+    text-align: center;
 }
 

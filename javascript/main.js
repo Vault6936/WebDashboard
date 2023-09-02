@@ -135,6 +135,12 @@ var websocketURL = "ws://10.69.36.2:5800";
 var currentLayout = "default";
 
 function initialize() {
+
+    if (!listLayoutNames().includes("default")) {
+        defaultSave();
+        console.warn("It looks like this is your first time using the Vault 6936 Web Dashboard in this browser.  Welcome!");
+    }
+
     openSocket(0);
     whiteboard = document.getElementById("whiteboard");
     settings = document.getElementById("settings");
@@ -166,16 +172,21 @@ function getDraggableIndex(draggable) {
 function addDefaultDraggable() {
     draggables.push(new WhiteboardDraggable("", new Vector2d(100, 100), "25x25", "black", "button"));
 }
-function setSize(element, width, height, inPixels) {
-    if ((window.innerHeight < 800 || window.innerWidth < 1300) && (width != 0)) {
-        element.style.width = 500 + "px";
-        element.style.height = 300 + "px";
-    } else if (inPixels) {
+function setPopupSize(element, width, height, minWidth, minHeight, inPixels) {
+    element.style.height = 0;
+    element.style.width = 0;
+    width = parseFloat(width);
+    height = parseFloat(height);
+    if (inPixels) {
         element.style.width = width + "px";
         element.style.height = height + "px";
     } else {
-        element.style.width = width + "%";
-        element.style.height = height + "%";
+        aspectRatio = width / height;
+        height = clamp(height, 0, 90);
+        element.style.height = height.toString() + "vh";
+        element.style.width = clamp(height * aspectRatio, 0, 90).toString() + "vh";
+        element.style.minHeight = toHTMLPositionPX(minHeight);
+        element.style.minWidth = toHTMLPositionPX(minWidth);
     }
 }
 function toggleEditingMode() {
@@ -214,14 +225,15 @@ function openPopup(target) {
     }
 
     if (popup.id == "settings") {
-        setSize(popup, 50, 50, false);
+        setPopupSize(popup, 75, 50, 0, 0, false);
     } else if (popup.id == "color-picker") {
-        setSize(popup, 25, 25, false);
+        setPopupSize(popup, 75, 50, 0, 0, false);
         popup.getElementsByClassName("popup-input")[0].value = ""; //taking the input field and setting the value to an empty string
+    } else if (popup.id == "clear-storage") {
+        setPopupSize(popup, 75, 20, 0, 0, false)
     } else {
-        setSize(popup, 25, 25, false);
+        setPopupSize(popup, 50, 25, 0, 0, false);
     }
-    setSize(content, 100, 100, false);
 
     window.setTimeout(() => content.style.display = "block", 500);
 
@@ -241,7 +253,7 @@ function closePopup(target) {
     }
     content.style.display = "none";
     activePopup = null;
-    setSize(popup, 0, 0, false);
+    setPopupSize(popup, 0, 0, false);
     popup.classList.remove("popup-displayed");
     popupBackground.style.display = "none";
     target.style.display = "none";
@@ -318,11 +330,38 @@ function saveSettings() {
     activePopup.getElementsByClassName("close")[0].click();
 
 }
+function listLayoutNames() {
+    layoutNames = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        if (/webdashboard:/.test(localStorage.key(i))) {
+            layoutNames.push(localStorage.key(i).replace(/webdashboard:/, ""));
+        }
+    }
+    return layoutNames;
+}
 function removeLayout(key) {
     try {
-        localStorage.removeItem("webdashboard:" + key);
+        if (key !== "default") {
+            localStorage.removeItem("webdashboard:" + key);
+        }
     } catch {
         let notice = new Notice("Could not remove layout!  Try reloading the page.", "negative");
+    }
+}
+function removeAllLayouts() {
+    let layoutNames = listLayoutNames();
+    for (let i = 0; i < layoutNames.length; i++) {
+        removeLayout(layoutNames[i]);
+    }
+    activePopup.getElementsByClassName("close")[0].click();
+}
+function updateCurrentLayout(name) {
+    currentLayout = name;
+    let layoutLabel = document.getElementById("layout-name");
+    if (currentLayout === "default") {
+        layoutLabel.innerHTML = "default layout";
+    } else {
+        layoutLabel.innerHTML = `layout: ${currentLayout}`;
     }
 }
 function saveJSON() {
@@ -330,6 +369,7 @@ function saveJSON() {
         draggables[i].setName(draggables[i].label.value);
     }
     let name = activePopup.getElementsByClassName("popup-input")[0].value;
+    updateCurrentLayout(name);    
     let data = JSON.stringify(draggables);
     localStorage.setItem("webdashboard:" + name, data)
     activePopup.getElementsByClassName("close")[0].click();
@@ -345,14 +385,13 @@ function selectJSON(event) {
     let activePopup = getPopup(event.target);
     let carousel = activePopup.getElementsByClassName("selectable-carousel-container")[0];
     carousel.innerHTML = "";
-    for (let i = 0; i < localStorage.length; i++) {
-        if (/webdashboard:/.test(localStorage.key(i))) { // /webdashboard:/ is shorthand for creating a RegEx object with the /webdashboard:/ pattern
-            let a = document.createElement("a");
-            a.setAttribute("class", "default-text carousel-item selectable layout-selector-button");
-            a.innerHTML = localStorage.key(i).replace(/webdashboard:/, "");
-            a.onclick = (event) => openJSON(localStorage.key(i));
-            carousel.appendChild(a);
-        }
+    let layoutNames = listLayoutNames();
+    for (let i = 0; i < layoutNames.length; i++) {
+        let a = document.createElement("a");
+        a.setAttribute("class", "default-text carousel-item selectable layout-selector-button");
+        a.innerHTML = layoutNames[i];
+        a.onclick = (event) => openJSON(`webdashboard:${layoutNames[i]}`);
+        carousel.appendChild(a);
     }
 }
 function clearLayout() {
@@ -362,13 +401,7 @@ function clearLayout() {
     }
 }
 function openJSON(key) {
-    currentLayout = key.replace(/webdashboard:/, "");
-    let layoutLabel = document.getElementById("layout-name");
-    if (currentLayout === "default") {
-        layoutLabel.innerHTML = "default layout";
-    } else {
-        layoutLabel.innerHTML = `layout: ${currentLayout}`;
-    }
+    updateCurrentLayout(key.replace(/webdashboard:/, ""));
     let data = JSON.parse(localStorage.getItem(key));
     activePopup.getElementsByClassName("close")[0].click();
     clearLayout();
@@ -380,12 +413,17 @@ function openJSON(key) {
         let type = data[i].type;
         draggables.push(new WhiteboardDraggable(name, position, size, color, type, ""))
     }
+    toggleEditingMode();
+    toggleEditingMode();
 }
 function clearSavedSettings() {
     localStorage.clear();
 }
+
+var currentNotice = null;
+
 class Notice {
-    constructor(message, type) {
+    constructor(message, type, duration) {
         let color = "gray";
         if (type === "positive") {
             color = "limegreen";
@@ -404,50 +442,56 @@ class Notice {
         textContainer.appendChild(p);
         this.container.classList.add("notice-container");
         this.container.style.backgroundColor = color;
-        this.container.style.opacity = 0;
         document.body.appendChild(this.container);
-        this.containerOpacity = 0;
         this.fade = null;
+
+
+        this.fadeInAnimation = [{opacity: 0}, {opacity: 1}];
+
+        this.fadeOutAnimation = [{opacity: 1}, {opacity: 0}];
+
+        this.fadeTiming = {duration: 500, iterations: 1};
+
+        this.fadeSequence();
+
+
     }
-    fadeIn() {
-        let func = this.increaseOpacity.bind(this); //binding will bind the function's "this" to the provided value instead of the thing that's executing it
-        this.fade = window.setInterval(func, 5);
+
+
+
+    fadeSequence() {
+        let promise = new Promise((resolve, reject) => {
+            try {
+                this.container.animate(this.fadeInAnimation, this.fadeTiming); 
+                this.container.style.opacity = "1.0"; 
+                resolve();
+            } catch {
+                reject("Failed to properly display notice.  Check your browser version.");
+            }
+
+        });
+        promise.then(() => {
+            setTimeout(() => {
+                this.container.animate(this.fadeOutAnimation, this.fadeTiming);
+                this.container.style.opacity = "0.0"; 
+            }, 2000)
+        }, (result) => console.warn(result));
+
     }
-    increaseOpacity() {
-        this.containerOpacity += 0.01;
-        if (this.containerOpacity >= 1.0) {
-            window.clearInterval(this.fade);
-        } else {
-            this.container.style.opacity = this.containerOpacity;
-        }
-    }
-    fadeOut() {
-        let func = this.decreaseOpacity.bind(this);
-        this.fade = window.setInterval(func, 5);
-    }
-    //TODO: Something is happening where multiple notices are being created and applying everything to the exact same element...or somethine like that
-    decreaseOpacity() {
-        this.containerOpacity -= 0.01;
-        if (this.containerOpacity <= 0) {
-            window.clearInterval(this.fade);
-        } else {
-            this.container.style.opacity = this.containerOpacity;
-        }
-    }
+
+
 }
-function createNotice(message, type) {
-    let notice = new Notice(message, type);
-    notice.fadeIn();
-    window.setTimeout(notice.fadeOut.bind(notice), 8000);
+function createNotice(message, type, duration) {
+    currentNotice = new Notice(message, type, duration);
 }
 function openSocket(recursion) {
     if (recursion == 0) {
-        createNotice("Attempting to connect to the RoboRio...");
+        createNotice("Attempting to connect to the RoboRio...", "neutral", 3000);
     }
     socket = new WebSocket(websocketURL);
-    socket.onopen = () => createNotice("Connected to the RoboRio!", "positive");
+    socket.onopen = () => createNotice("Connected to the RoboRio!", "positive", 8000);
     if (recursion < 1) {
-        socket.onerror = () => {createNotice("Could not connect to the RoboRio!", "negative"); openSocket(recursion + 1)};
+        socket.onerror = () => {createNotice("Could not connect to the RoboRio!", "negative", 8000); openSocket(recursion + 1)};
     } else {
         socket.onerror = () => {openSocket(recursion + 1)}
     }
