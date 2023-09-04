@@ -9,6 +9,7 @@
 
 <body onload="initialize()">
     <div id="menu">
+        <div id="layout-name-container"><p id="layout-name" class="default-text">default layout</p></div>
         <div id="menu-button-wrapper">
             <div class="dropdown">
                 <button class="dropdown-button">File</button>
@@ -34,7 +35,7 @@
                 <button class="dropdown-button">Options</button>
                 <div class="dropdown-container">
                     <a class="dropdown-option" popup="settings">settings</a>
-                    <a class="dropdown-option" onclick="">full screen</a>
+                    <a class="dropdown-option" onclick="toggleFullScreen()">full screen (f)</a>
                 </div>
             </div>
             <div id="transition"></div>
@@ -42,7 +43,6 @@
     </div>
     <div id="whiteboard"></div>
 
-    <div id="layout-name-container"><p id="layout-name" class="default-text">default layout</p></div>
     <div id="popup-background"></div>
 
     <div id="settings" class="popup">

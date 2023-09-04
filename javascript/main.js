@@ -8,13 +8,19 @@ class Vector2d {
 }
 class WhiteboardDraggable {
     constructor(name, position, size, color, type, id) {
+        this.div = document.createElement("div");
+
         this.name = name;
         this.size = size;
         this.position = position;
         this.color = color;
         this.size = size;
         this.type = type == null ? "button" : type;
-        this.div = document.createElement("div");
+
+        this.arrayIndex = 0;
+        this.updateIndex(draggables.length);
+
+        this.setId(id);
 
 
         this.draggingDiv = false;
@@ -23,9 +29,7 @@ class WhiteboardDraggable {
 
         this.container = document.createElement("span");
         this.label = document.createElement("input");
-        this.arrayIndex = 0;
 
-        this.updateIndex(draggables.length);
         this.div.className = "whiteboard-draggable";
         this.div.background = this.color;
 
@@ -54,7 +58,6 @@ class WhiteboardDraggable {
         }
         this.div.onmouseleave = (event) => {event.target.classList.remove("whiteboard-button"), event.target.style.background = this.color}
         this.div.dispatchEvent(new Event("mouseleave")); //If this event isn't dispatched, the program will glitch and cause the element to think the mouse is over it
-        this.setId(id);
         this.container.appendChild(this.div);
         whiteboard.appendChild(this.container);
         this.label.setAttribute("type", "text");
@@ -103,7 +106,9 @@ class WhiteboardDraggable {
         this.name = name;
     }
     setId(id) {
-        this.id = id == null ? this.arrayIndex : id;
+        if (id == null || id == "undefined" || id == "") {
+            id = `${this.type}${this.arrayIndex}`;
+        }
         this.div.id = id;
         this.div.title = (`ID: ${id}`); //I LOVE string interpolation
     }
@@ -133,8 +138,68 @@ var currentDraggable; //global variable containing the draggable element from wh
 var draggables = []; //global array of all draggables created
 var websocketURL = "ws://10.69.36.2:5800";
 var currentLayout = "default";
+openJSON("webdashboard:default");
+var isFullScreen = false;
+
+function inFullScreen() {
+    return Math.abs(window.outerWidth-screen.width) < 5 && Math.abs(window.outerHeight - screen.height) < 5;    
+}
+
+class EventChecker {
+    constructor(event, checker, target) {
+        this.event = event;
+        this.checker = checker;
+        this.target = target;
+        this.check = this.check.bind(this);
+        this.fire = this.fireEvent.bind(this);
+        this.lastState = false;
+    }
+    check() {
+        try {
+            const state = this.checker();
+            if (state && state != this.lastState) {
+                this.fireEvent();
+            };
+            this.lastState = state;
+        } catch {
+            console.warn("Event checker object is not a function!");
+        }
+    }
+    fireEvent() {
+        this.target.dispatchEvent(this.event);
+    }
+}
+
+var eventCheckers = []
+
+fullScreenEvent = new EventChecker(new CustomEvent("fullscreen"), inFullScreen, window);
+exitFullScreenEvent = new EventChecker(new CustomEvent("exitfullscreen"), () => !inFullScreen(), window);
+
+eventCheckers.push(fullScreenEvent);
+eventCheckers.push(exitFullScreenEvent);
+
+window.addEventListener("fullscreen", () => {if (!isFullScreen) toggleFullScreen()});
+window.addEventListener("exitfullscreen", () => {if (isFullScreen) toggleFullScreen()})
+
+
+setInterval(() => {
+    for (let i = 0; i < eventCheckers.length; i++) {
+        eventCheckers[i].check();
+    }
+}, 20);
+
 
 function initialize() {
+
+    window.addEventListener("keydown", (event) => {
+        if (event.isComposing) {
+          return;
+        };
+        if (event.key == "f") {
+            toggleFullScreen();
+        }
+      });
+      
 
     if (!listLayoutNames().includes("default")) {
         defaultSave();
@@ -170,7 +235,7 @@ function getDraggableIndex(draggable) {
     return parseInt(draggable.getAttribute("index"));
 }
 function addDefaultDraggable() {
-    draggables.push(new WhiteboardDraggable("", new Vector2d(100, 100), "25x25", "black", "button"));
+    draggables.push(new WhiteboardDraggable("", new Vector2d(100, 100), "25x25", "black", "button", null));
 }
 function setPopupSize(element, width, height, minWidth, minHeight, inPixels) {
     element.style.height = 0;
@@ -309,13 +374,13 @@ function duplicate(draggable) {
 function changeID() {
     let id = activePopup.getElementsByClassName("popup-input")[0].value;
     draggables[getDraggableIndex(currentDraggable)].setId(id);
-    activePopup.getElementsByClassName("close")[0].click();
+    clickCloseBtn();
 }
 function changeColor() {
     let color = activePopup.getElementsByClassName("popup-input")[0].value;
     currentDraggable.style.background = color;
     draggables[currentDraggable.getAttribute("index")].color = color;
-    activePopup.getElementsByClassName("close")[0].click();
+    clickCloseBtn();
 }
 function setDraggableSize() {
     let size = activePopup.getElementsByClassName("popup-input")[0].value;
@@ -323,12 +388,27 @@ function setDraggableSize() {
     width = parseInt(size[0]);
     height = parseInt(size[1]);
     draggables[getDraggableIndex(currentDraggable)].setSize(new Vector2d(width, height));
-    activePopup.getElementsByClassName("close")[0].click();
+    clickCloseBtn();
 }
 function saveSettings() {
     websocketURL = document.getElementById("websocketURL").value;
-    activePopup.getElementsByClassName("close")[0].click();
+    clickCloseBtn();
 
+}
+function toggleFullScreen() {
+    isFullScreen = !isFullScreen;
+        if (isFullScreen) {
+            document.getElementById("menu").style.display = "none";
+            try {
+                document.documentElement.requestFullscreen();
+                createNotice("Press f to exit full screen", "neutral", 4000);
+            } catch {}
+        } else {
+            document.getElementById("menu").style.display = "block";
+            try {
+                document.exitFullscreen();
+            } catch {}
+        }
 }
 function listLayoutNames() {
     layoutNames = [];
@@ -353,7 +433,7 @@ function removeAllLayouts() {
     for (let i = 0; i < layoutNames.length; i++) {
         removeLayout(layoutNames[i]);
     }
-    activePopup.getElementsByClassName("close")[0].click();
+    clickCloseBtn();
 }
 function updateCurrentLayout(name) {
     currentLayout = name;
@@ -372,7 +452,7 @@ function saveJSON() {
     updateCurrentLayout(name);    
     let data = JSON.stringify(draggables);
     localStorage.setItem("webdashboard:" + name, data)
-    activePopup.getElementsByClassName("close")[0].click();
+    clickCloseBtn();
 }
 function defaultSave() {
     for (let i = 0; i < draggables.length; i++) {
@@ -400,10 +480,15 @@ function clearLayout() {
         draggables[0].delete(); //Every time delete() is called, a new draggable will fall into the 0 slot in the array
     }
 }
+function clickCloseBtn() {
+    try {
+        clickCloseBtn();
+    } catch {}
+}
 function openJSON(key) {
     updateCurrentLayout(key.replace(/webdashboard:/, ""));
     let data = JSON.parse(localStorage.getItem(key));
-    activePopup.getElementsByClassName("close")[0].click();
+    clickCloseBtn();
     clearLayout();
     for (let i = 0; i < data.length; i++) {
         let name = data[i].name;
@@ -454,7 +539,7 @@ class Notice {
 
         this.fadeSequence();
 
-
+        this.duration = duration;
     }
 
 
@@ -474,7 +559,7 @@ class Notice {
             setTimeout(() => {
                 this.container.animate(this.fadeOutAnimation, this.fadeTiming);
                 this.container.style.opacity = "0.0"; 
-            }, 2000)
+            }, this.duration)
         }, (result) => console.warn(result));
 
     }
