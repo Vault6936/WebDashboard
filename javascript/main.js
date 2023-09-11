@@ -172,15 +172,14 @@ class EventChecker {
 
 var eventCheckers = []
 
-fullScreenEvent = new EventChecker(new CustomEvent("fullscreen"), inFullScreen, window);
-exitFullScreenEvent = new EventChecker(new CustomEvent("exitfullscreen"), () => !inFullScreen(), window);
+var fullScreenEvent = new EventChecker(new CustomEvent("fullscreen"), inFullScreen, window);
+var exitFullScreenEvent = new EventChecker(new CustomEvent("exitfullscreen"), () => {return !inFullScreen()}, window);
 
 eventCheckers.push(fullScreenEvent);
 eventCheckers.push(exitFullScreenEvent);
 
-window.addEventListener("fullscreen", () => {if (!isFullScreen) toggleFullScreen()});
-window.addEventListener("exitfullscreen", () => {if (isFullScreen) toggleFullScreen()})
-
+window.addEventListener("fullscreen", enterFullScreen);
+window.addEventListener("exitfullscreen", exitFullScreen);
 
 setInterval(() => {
     for (let i = 0; i < eventCheckers.length; i++) {
@@ -191,14 +190,14 @@ setInterval(() => {
 
 function initialize() {
 
-    window.addEventListener("keydown", (event) => {
+    /*window.addEventListener("keydown", (event) => {
         if (event.isComposing) {
           return;
         };
         if (event.key == "f") {
             toggleFullScreen();
         }
-      });
+      });*/
       
 
     if (!listLayoutNames().includes("default")) {
@@ -395,21 +394,29 @@ function saveSettings() {
     clickCloseBtn();
 
 }
+
 function toggleFullScreen() {
-    isFullScreen = !isFullScreen;
-        if (isFullScreen) {
-            document.getElementById("menu").style.display = "none";
-            try {
-                document.documentElement.requestFullscreen();
-                createNotice("Press f to exit full screen", "neutral", 4000);
-            } catch {}
-        } else {
-            document.getElementById("menu").style.display = "block";
-            try {
-                document.exitFullscreen();
-            } catch {}
-        }
+    if (isFullScreen) {
+        document.exitFullscreen();
+        exitFullScreen();
+    } else {
+        document.documentElement.requestFullscreen();
+        enterFullScreen();
+    }
 }
+
+function enterFullScreen() {
+    isFullScreen = true;
+    document.getElementById("menu").style.display = "none";
+    createNotice("Press f11 to exit full screen", "neutral", 4000);
+}
+
+function exitFullScreen() {
+    isFullScreen = false;
+    console.log("hi");
+    document.getElementById("menu").style.display = "block";
+}
+
 function listLayoutNames() {
     layoutNames = [];
     for (let i = 0; i < localStorage.length; i++) {
