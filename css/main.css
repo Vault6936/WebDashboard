@@ -377,3 +377,15 @@ body {
     text-align: center;
 }
 
+#whiteboard-border {
+    display: none;
+    border: 5px dashed black;
+    width: calc(100% - 30px);
+    margin-left: 10px;
+    height: calc(100% - 75px);
+    position: relative;
+    top: 0px;
+    left: 0px;
+    margin-top: 50px;
+}
+

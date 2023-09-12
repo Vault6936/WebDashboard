@@ -1,11 +1,90 @@
 var socket;
 
+
+var currentNotice = null;
+
+class Notice {
+    constructor(message, type, duration) {
+        let color = "gray";
+        if (type === "positive") {
+            color = "limegreen";
+        } else if (type === "negative") {
+            color = "red";
+        }
+        this.message = message;
+        this.container = document.createElement("div");
+        let textContainer = document.createElement("div");
+        textContainer.classList.add("notice-text-container");
+        let p = document.createElement("p");
+        p.classList.add("default-text");
+        p.classList.add("notice");
+        p.innerHTML = message;
+        this.container.appendChild(textContainer);
+        textContainer.appendChild(p);
+        this.container.classList.add("notice-container");
+        this.container.style.backgroundColor = color;
+        document.body.appendChild(this.container);
+        this.fade = null;
+
+
+        this.fadeInAnimation = [{opacity: 0}, {opacity: 1}];
+
+        this.fadeOutAnimation = [{opacity: 1}, {opacity: 0}];
+
+        this.fadeTiming = {duration: 500, iterations: 1};
+
+        this.fadeSequence();
+
+        this.duration = duration;
+    }
+
+
+
+    fadeSequence() {
+        let promise = new Promise((resolve, reject) => {
+            try {
+                this.container.animate(this.fadeInAnimation, this.fadeTiming); 
+                this.container.style.opacity = "1.0"; 
+                resolve();
+            } catch {
+                reject("Failed to properly display notice.  Check your browser version.");
+            }
+
+        });
+        promise.then(() => {
+            setTimeout(() => {
+                this.container.animate(this.fadeOutAnimation, this.fadeTiming);
+                this.container.style.opacity = "0.0"; 
+            }, this.duration)
+        }, (result) => console.warn(result));
+
+    }
+
+
+}
+function createNotice(message, type, duration) {
+    currentNotice = new Notice(message, type, duration);
+}
+function openSocket(recursion) {
+    if (recursion == 0) {
+        createNotice("Attempting to connect to the RoboRio...", "neutral", 3000);
+    }
+    socket = new WebSocket(websocketURL);
+    socket.onopen = () => createNotice("Connected to the RoboRio!", "positive", 8000);
+    if (recursion < 1) {
+        socket.onerror = () => {createNotice("Could not connect to the RoboRio!", "negative", 8000); openSocket(recursion + 1)};
+    } else {
+        socket.onerror = () => {openSocket(recursion + 1)}
+    }
+}
+
 class Vector2d {
     constructor(x ,y) {
         this.x = x;
         this.y = y;
     }
 }
+// #region [draggable class]
 class WhiteboardDraggable {
     constructor(name, position, size, color, type, id) {
         this.div = document.createElement("div");
@@ -51,7 +130,8 @@ class WhiteboardDraggable {
                 }
             }
         };
-        document.onmouseup = () => {window.removeEventListener("mousemove", drag); draggableDiv.draggingDiv = false};
+        document.onpointerup = () => {window.removeEventListener("mousemove", drag); draggableDiv.draggingDiv = false};
+        window.onmouseup = () => {window.removeEventListener("mousemove", drag); draggableDiv.draggingDiv = false};
         this.div.onmouseup = () => {window.removeEventListener("mousemove", drag); draggableDiv.draggingDiv = false}; //TODO: May not need both listeners?  Must test
         draggableDiv.onmouseover = (event) => {
             if (elementEditing) {event.target.style.cursor = "move"} else if (this.type === "button") {event.target.style.cursor = "pointer"; event.target.style.background = "#ebebe0"} else {event.target.style.cursor = "auto"}
@@ -130,6 +210,9 @@ class WhiteboardDraggable {
         this.div.parentElement.remove();
     }
 }
+// #endregion 
+
+// #region declare global variables
 var mouseVector = new Vector2d(0, 0);
 var dragOffset = new Vector2d(0, 0);
 var elementEditing = false;
@@ -140,6 +223,8 @@ var websocketURL = "ws://10.69.36.2:5800";
 var currentLayout = "default";
 openJSON("webdashboard:default");
 var isFullScreen = false;
+
+// #endregion
 
 function inFullScreen() {
     return Math.abs(window.outerWidth-screen.width) < 5 && Math.abs(window.outerHeight - screen.height) < 5;    
@@ -190,15 +275,7 @@ setInterval(() => {
 
 function initialize() {
 
-    /*window.addEventListener("keydown", (event) => {
-        if (event.isComposing) {
-          return;
-        };
-        if (event.key == "f") {
-            toggleFullScreen();
-        }
-      });*/
-      
+    generateSimplePopup("set-whiteboard-size", setWhiteBoardSize, "750x500");      
 
     if (!listLayoutNames().includes("default")) {
         defaultSave();
@@ -256,12 +333,15 @@ function setPopupSize(element, width, height, minWidth, minHeight, inPixels) {
 function toggleEditingMode() {
     var editingToggle = document.getElementById("editingToggle");
     var labels = document.getElementsByClassName("whiteboard-label");
+    var border = document.getElementById("whiteboard-border");
     if (elementEditing) {
+        border.style.display = "none";
         editingToggle.innerHTML = "turn on editing mode";
         for (var i = 0; i < labels.length; i++) {
             labels[i].readOnly = true;
         }
     } else {
+        border.style.display = "block";
         editingToggle.innerHTML = "turn off editing mode";
         for (var i = 0; i < labels.length; i++) {
             labels[i].readOnly = false;
@@ -300,8 +380,6 @@ function openPopup(target) {
     }
 
     window.setTimeout(() => content.style.display = "block", 500);
-
-    popup.classList.add("popup-displayed");
     
     popup.setAttribute("z-index", "1");
     closeBtn.style.display = "block";
@@ -311,14 +389,9 @@ function openPopup(target) {
 function closePopup(target) {
     let popup = target.parentElement;
     let content = popup.getElementsByClassName("popup-content")[0];
-    let animated = popup.getElementsByClassName("popup-animated");
-    for (i = 0; i < animated.length; i++) {
-        animated.style.opacity = "0%";
-    }
     content.style.display = "none";
     activePopup = null;
     setPopupSize(popup, 0, 0, false);
-    popup.classList.remove("popup-displayed");
     popupBackground.style.display = "none";
     target.style.display = "none";
 }
@@ -331,6 +404,55 @@ function removeMenu(event) {
 
     }
 }
+
+/*
+    <div id="settings" class="popup">
+        <img src="./images/close.svg" class="close"></img>
+        <div class="popup-content">
+            <div id="websocket-url-input-wrapper">
+                <input type="text" placeholder="ws://127.0.0.1:5800" class="popup-input" id="websocketURL"></input>
+            </div>
+            <div class="apply-container">
+                <button class="apply" onclick="saveSettings()">apply</button>
+            </div>
+        </div>
+    </div>
+    */
+
+function generateSimplePopup(popupName, onApply, inputPlaceholder) {
+    let div = document.createElement("div");
+    div.id = popupName;
+    div.setAttribute("class", "popup");
+    let cls = document.createElement("img");
+    cls.setAttribute("class", "close");
+    cls.setAttribute("src", "./images/close.svg")
+    div.appendChild(cls);
+    let content = document.createElement("div");
+    content.setAttribute("class", "popup-content");
+    div.appendChild(content);
+    let input = document.createElement("input");
+    input.setAttribute("type", "text");
+    input.setAttribute("placeholder", inputPlaceholder);
+    input.setAttribute("class", "popup-input");
+    content.appendChild(input);
+    let applyContainer = document.createElement("div");
+    applyContainer.setAttribute("class", "apply-container");
+    content.appendChild(applyContainer);
+    let apply = document.createElement("button");
+    apply.setAttribute("class", "apply");
+    apply.onclick = onApply;
+    apply.innerHTML = "apply";
+    applyContainer.appendChild(apply);
+    document.body.appendChild(div);
+
+    let opener = document.createElement("a");
+    opener.setAttribute("popup", popupName);
+    opener.style.display = "none";
+    document.body.appendChild(opener);
+
+    return div;    
+}
+
 function generateMenuButton(parent, name, onclick) {
     let button = document.createElement("a");
     button.innerHTML = name;
@@ -338,7 +460,7 @@ function generateMenuButton(parent, name, onclick) {
         try {
             onclick(); 
         } finally {
-            removeMenu()
+            removeMenu();
         }
     };
     button.className = "menu-button";
@@ -359,13 +481,22 @@ function generateRightClickMenu(event) {
             generateMenuButton(container, "set size", () => document.getElementById("open-size-picker").click());
             generateMenuButton(container, "set element type", () => document.getElementById("open-type-changer").click());
             generateMenuButton(container, "duplicate", () => duplicate(draggables[getDraggableIndex(currentDraggable)]));
-        }
+        }    
+    } else if (event.target.id == "whiteboard-border") {
+        generateMenuButton(container, "set whiteboard size", () => document.querySelectorAll('[popup="set-whiteboard-size"]')[0].click());
     } else if (event.target.classList.contains("layout-selector-button")) {
         if (event.target.innerHTML !== "default") {
             generateMenuButton(container, "delete", () => {removeLayout(event.target.innerHTML); event.target.remove()});
         }
     }
     document.body.appendChild(container);
+}
+function clickCloseBtn() {
+    try {
+        activePopup.getElementsByClassName("close")[0].click();
+    } catch {
+        console.warn("Could not close popup.");
+    }
 }
 function duplicate(draggable) {
     draggables.push(new WhiteboardDraggable(draggable.name, new Vector2d(0, 0), draggable.size, draggable.color, draggable.type, draggable.id));
@@ -389,6 +520,14 @@ function setDraggableSize() {
     draggables[getDraggableIndex(currentDraggable)].setSize(new Vector2d(width, height));
     clickCloseBtn();
 }
+function setWhiteBoardSize() {
+    let size = activePopup.getElementsByClassName("popup-input")[0].value;
+    size = size.split(/[Xx]/);
+    let border = document.getElementById("whiteboard-border");
+    border.style.width = toHTMLPositionPX(size[0]);
+    border.style.height = toHTMLPositionPX(size[1]);
+    clickCloseBtn();    
+}
 function saveSettings() {
     websocketURL = document.getElementById("websocketURL").value;
     clickCloseBtn();
@@ -406,6 +545,7 @@ function toggleFullScreen() {
 }
 
 function enterFullScreen() {
+    if (elementEditing) toggleEditingMode();
     isFullScreen = true;
     document.getElementById("menu").style.display = "none";
     createNotice("Press f11 to exit full screen", "neutral", 4000);
@@ -413,7 +553,6 @@ function enterFullScreen() {
 
 function exitFullScreen() {
     isFullScreen = false;
-    console.log("hi");
     document.getElementById("menu").style.display = "block";
 }
 
@@ -451,22 +590,31 @@ function updateCurrentLayout(name) {
         layoutLabel.innerHTML = `layout: ${currentLayout}`;
     }
 }
+
+function getJSON() {
+    let data = {};
+    let draggableData = draggables;
+    data.draggableData = draggableData;
+    let border = document.getElementById("whiteboard-border");
+    data.border = {"width": border.style.width, "height": border.style.height};
+    data = JSON.stringify(data);
+    return data;
+}
+
 function saveJSON() {
     for (let i = 0; i < draggables.length; i++) {
         draggables[i].setName(draggables[i].label.value);
     }
     let name = activePopup.getElementsByClassName("popup-input")[0].value;
     updateCurrentLayout(name);    
-    let data = JSON.stringify(draggables);
-    localStorage.setItem("webdashboard:" + name, data)
+    localStorage.setItem("webdashboard:" + name, getJSON());
     clickCloseBtn();
 }
 function defaultSave() {
     for (let i = 0; i < draggables.length; i++) {
         draggables[i].setName(draggables[i].label.value);
     }
-    let data = JSON.stringify(draggables);
-    localStorage.setItem(`webdashboard:${currentLayout}`, data)
+    localStorage.setItem(`webdashboard:${currentLayout}`, getJSON())
 }
 function selectJSON(event) {
     let activePopup = getPopup(event.target);
@@ -487,104 +635,33 @@ function clearLayout() {
         draggables[0].delete(); //Every time delete() is called, a new draggable will fall into the 0 slot in the array
     }
 }
-function clickCloseBtn() {
-    try {
-        clickCloseBtn();
-    } catch {}
-}
+
 function openJSON(key) {
     updateCurrentLayout(key.replace(/webdashboard:/, ""));
-    let data = JSON.parse(localStorage.getItem(key));
     clickCloseBtn();
     clearLayout();
-    for (let i = 0; i < data.length; i++) {
-        let name = data[i].name;
-        let position = new Vector2d(data[i].position.x, data[i].position.y);
-        let size = data[i].size;
-        let color = data[i].color;
-        let type = data[i].type;
-        draggables.push(new WhiteboardDraggable(name, position, size, color, type, ""))
+    try {
+        let data = JSON.parse(localStorage.getItem(key));
+        let border = document.getElementById("whiteboard-border");
+
+        if (data.border.width != null) border.style.width = data.border.width;
+        if (data.border.height != null) border.style.height = data.border.height;
+
+        for (let i = 0; i < data.draggableData.length; i++) {
+            let name = data.draggableData[i].name;
+            let position = new Vector2d(data.draggableData[i].position.x, data.draggableData[i].position.y);
+            let size = data.draggableData[i].size;
+            let color = data.draggableData[i].color;
+            let type = data.draggableData[i].type;
+            draggables.push(new WhiteboardDraggable(name, position, size, color, type, ""));
+        }
+    } catch (err) {
+        console.warn(err);
+        createNotice("Could not open layout!", "negative", 5000);
     }
     toggleEditingMode();
     toggleEditingMode();
 }
 function clearSavedSettings() {
     localStorage.clear();
-}
-
-var currentNotice = null;
-
-class Notice {
-    constructor(message, type, duration) {
-        let color = "gray";
-        if (type === "positive") {
-            color = "limegreen";
-        } else if (type === "negative") {
-            color = "red";
-        }
-        this.message = message;
-        this.container = document.createElement("div");
-        let textContainer = document.createElement("div");
-        textContainer.classList.add("notice-text-container");
-        let p = document.createElement("p");
-        p.classList.add("default-text");
-        p.classList.add("notice");
-        p.innerHTML = message;
-        this.container.appendChild(textContainer);
-        textContainer.appendChild(p);
-        this.container.classList.add("notice-container");
-        this.container.style.backgroundColor = color;
-        document.body.appendChild(this.container);
-        this.fade = null;
-
-
-        this.fadeInAnimation = [{opacity: 0}, {opacity: 1}];
-
-        this.fadeOutAnimation = [{opacity: 1}, {opacity: 0}];
-
-        this.fadeTiming = {duration: 500, iterations: 1};
-
-        this.fadeSequence();
-
-        this.duration = duration;
-    }
-
-
-
-    fadeSequence() {
-        let promise = new Promise((resolve, reject) => {
-            try {
-                this.container.animate(this.fadeInAnimation, this.fadeTiming); 
-                this.container.style.opacity = "1.0"; 
-                resolve();
-            } catch {
-                reject("Failed to properly display notice.  Check your browser version.");
-            }
-
-        });
-        promise.then(() => {
-            setTimeout(() => {
-                this.container.animate(this.fadeOutAnimation, this.fadeTiming);
-                this.container.style.opacity = "0.0"; 
-            }, this.duration)
-        }, (result) => console.warn(result));
-
-    }
-
-
-}
-function createNotice(message, type, duration) {
-    currentNotice = new Notice(message, type, duration);
-}
-function openSocket(recursion) {
-    if (recursion == 0) {
-        createNotice("Attempting to connect to the RoboRio...", "neutral", 3000);
-    }
-    socket = new WebSocket(websocketURL);
-    socket.onopen = () => createNotice("Connected to the RoboRio!", "positive", 8000);
-    if (recursion < 1) {
-        socket.onerror = () => {createNotice("Could not connect to the RoboRio!", "negative", 8000); openSocket(recursion + 1)};
-    } else {
-        socket.onerror = () => {openSocket(recursion + 1)}
-    }
 }
