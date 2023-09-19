@@ -41,7 +41,7 @@ class Notice {
 
 
     fadeSequence() {
-        let promise = new Promise((resolve, reject) => {
+        let fadeIn = new Promise((resolve, reject) => {
             try {
                 this.container.animate(this.fadeInAnimation, this.fadeTiming); 
                 this.container.style.opacity = "1.0"; 
@@ -51,13 +51,13 @@ class Notice {
             }
 
         });
-        promise.then(() => {
-            setTimeout(() => {
-                this.container.animate(this.fadeOutAnimation, this.fadeTiming);
-                this.container.style.opacity = "0.0"; 
+        fadeIn.then(() => {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                this.container.animate(this.fadeOutAnimation, this.fadeTiming).finished.then(() => resolve());
             }, this.duration)
-        }, (result) => console.warn(result));
-
+        }
+        )}).then(() => this.container.remove());
     }
 
 
@@ -94,11 +94,13 @@ class WhiteboardDraggable {
         this.position = position;
         this.color = color;
         this.size = size;
-        this.type = type == null ? "button" : type;
+        this.type = null;
+        this.setType(type);
 
         this.arrayIndex = 0;
         this.updateIndex(draggables.length);
 
+        this.id = null;
         this.setId(id);
 
 
@@ -108,20 +110,23 @@ class WhiteboardDraggable {
 
         this.container = document.createElement("span");
         this.label = document.createElement("input");
+        if (!elementEditing) {
+            this.label.readOnly = true;
+        }
 
         this.div.className = "whiteboard-draggable";
         this.div.background = this.color;
 
         this.setSize(this.size);
 
-        let drag = () => this.setDraggablePosition(draggableDiv, mouseVector);
+        let drag = () => this.setDraggablePosition(draggableDiv, mousePosition);
 
         
 
         this.div.onmousedown = function(event) {
             if (elementEditing && event.button === 0) {
                 if (!draggableDiv.draggingDiv) {
-                    dragOffset = new Vector2d(mouseVector.x - draggableDiv.getBoundingClientRect().left, mouseVector.y - draggableDiv.getBoundingClientRect().top); 
+                    dragOffset = new Vector2d(mousePosition.x - draggableDiv.getBoundingClientRect().left, mousePosition.y - draggableDiv.getBoundingClientRect().top); 
                     window.addEventListener("mousemove", drag);
                     draggableDiv.draggingDiv = true;
                 } else {
@@ -130,9 +135,9 @@ class WhiteboardDraggable {
                 }
             }
         };
-        document.onpointerup = () => {window.removeEventListener("mousemove", drag); draggableDiv.draggingDiv = false};
-        window.onmouseup = () => {window.removeEventListener("mousemove", drag); draggableDiv.draggingDiv = false};
-        this.div.onmouseup = () => {window.removeEventListener("mousemove", drag); draggableDiv.draggingDiv = false}; //TODO: May not need both listeners?  Must test
+
+        [document, window, this.div].forEach((thing) => {thing.onpointerup = () => {window.removeEventListener("mousemove", drag); draggableDiv.draggingDiv = false}});
+
         draggableDiv.onmouseover = (event) => {
             if (elementEditing) {event.target.style.cursor = "move"} else if (this.type === "button") {event.target.style.cursor = "pointer"; event.target.style.background = "#ebebe0"} else {event.target.style.cursor = "auto"}
         }
@@ -147,19 +152,16 @@ class WhiteboardDraggable {
         this.container.appendChild(this.label);
         dragOffset = new Vector2d(0, 0);
         this.setDraggablePosition(this.div, this.position);
-        if (this.type == "button") {
-            this.div.classList.add("whiteboard-button");
-            this.div.onclick = function() {
-                    if (!elementEditing) {
-                    try {
-                        socket.send(draggableDiv.id);
-                    } catch {
-                    console.warn("Unable to send data to RoboRio");
-                    }
-                };
-            }
-        }
+    }
 
+    sendDataToRio() {
+        if (!elementEditing) {
+            try {
+                socket.send(this.id);
+            } catch {
+                console.warn("Unable to send data to RoboRio");
+            }
+        };
     }
 
     setDraggablePosition(draggableDiv, pose){
@@ -182,14 +184,27 @@ class WhiteboardDraggable {
         dragOffset = new Vector2d(0, 0);
         this.setDraggablePosition(this.div, this.position);
     }
+    setType(type) {
+        if (type == null) {
+            type = "button";
+        }
+        if (type == "button") {
+            this.div.addEventListener("click", this.sendDataToRio);
+        } else {
+            this.div.removeEventListener("click", this.sendDataToRio);
+        }
+        this.type = type;
+        this.setId();
+    }
     setName(name) {
         this.name = name;
     }
     setId(id) {
         if (id == null || id == "undefined" || id == "") {
-            id = `${this.type}${this.arrayIndex}`;
+            id = `${this.type}_${this.arrayIndex}`;
         }
         this.div.id = id;
+        this.id = id;
         this.div.title = (`ID: ${id}`); //I LOVE string interpolation
     }
     updateIndex(index) {
@@ -212,8 +227,17 @@ class WhiteboardDraggable {
 }
 // #endregion 
 
+class DraggableChange {
+    constructor(draggable) {
+        changes.push(this);
+        changes.splice(0, 1);
+    }
+}
+
 // #region declare global variables
-var mouseVector = new Vector2d(0, 0);
+var changes = []
+
+var mousePosition = new Vector2d(0, 0);
 var dragOffset = new Vector2d(0, 0);
 var elementEditing = false;
 var activePopup; //global variable containing the popup element that is currently open
@@ -275,7 +299,23 @@ setInterval(() => {
 
 function initialize() {
 
-    generateSimplePopup("set-whiteboard-size", setWhiteBoardSize, "750x500");      
+    window.addEventListener("keydown", (event) => {
+        if (event.key == "Enter") {
+            try {
+                activePopup.getElementsByClassName("apply")[0].click();
+            } catch {}
+        } else if (event.key == "s" && (event.ctrlKey || event.metaKey)) { //meta key is for MacOS
+              event.preventDefault();
+              defaultSave();
+              createNotice("Layout saved!", "positive", 3000);
+        }
+    });
+
+    generateSimpleInputPopup("whiteboard-size-setter", setWhiteBoardSize, "750x500", "border size");
+    generateSimpleInputPopup("size-picker", setDraggableSize, "100x100", "draggable size");
+    generateSimpleInputPopup("color-picker", changeColor, "#ffffff", "draggable color");
+
+    populatePopupList(document.getElementById("type-setter"), ["button", "toggle", "boolean telemetry", "text telemetry"], (iterable) => iterable, (iterable) => {return () => setType(iterable)});
 
     if (!listLayoutNames().includes("default")) {
         defaultSave();
@@ -285,17 +325,29 @@ function initialize() {
     openSocket(0);
     whiteboard = document.getElementById("whiteboard");
     settings = document.getElementById("settings");
+
+    popups = document.getElementsByClassName("popup");
+    for (let i = 0; i < popups.length; i++) {
+        if (popups[i].hasAttribute("code-opened")) {
+            let opener = document.createElement("a");
+            opener.setAttribute("class", "invisible-popup-opener");
+            opener.setAttribute("popup", popups[i].id);
+            opener.id = `open-${popups[i].id}`;
+            document.body.appendChild(opener);
+        }
+    }
+
     popupBackground = document.getElementById("popup-background");
     popupOpeners = document.querySelectorAll("[popup]"); //grabs all elements with a popup attribute
-    for (var i = 0; i < popupOpeners.length; i++) {
+    for (let i = 0; i < popupOpeners.length; i++) {
         popupOpeners[i].addEventListener("click", (event) => {openPopup(event.target)})
     }
     closeBtns = document.getElementsByClassName("close");
     for (i = 0; i < closeBtns.length; i++) {
         closeBtns[i].addEventListener("click", (event) => {closePopup(event.target)});
     }
-    window.addEventListener("mousemove", (event) => {mouseVector = new Vector2d(event.clientX, event.clientY)});
-    window.oncontextmenu = (event) => generateRightClickMenu(event), false;
+    window.addEventListener("mousemove", (event) => {mousePosition = new Vector2d(event.clientX, event.clientY)});
+    window.oncontextmenu = (event) => generateContextMenu(event), false;
     window.onmousedown = (event) => removeMenu(event);
 }
 function clamp(value, min, max) {
@@ -311,24 +363,14 @@ function getDraggableIndex(draggable) {
     return parseInt(draggable.getAttribute("index"));
 }
 function addDefaultDraggable() {
-    draggables.push(new WhiteboardDraggable("", new Vector2d(100, 100), "25x25", "black", "button", null));
+    draggables.push(new WhiteboardDraggable("", new Vector2d(100, 100), new Vector2d(100, 100), "black", "button", null));
 }
-function setPopupSize(element, width, height, minWidth, minHeight, inPixels) {
-    element.style.height = 0;
-    element.style.width = 0;
+function setPopupSize(element, width, height) {
     width = parseFloat(width);
     height = parseFloat(height);
-    if (inPixels) {
-        element.style.width = width + "px";
-        element.style.height = height + "px";
-    } else {
-        aspectRatio = width / height;
-        height = clamp(height, 0, 90);
-        element.style.height = height.toString() + "vh";
-        element.style.width = clamp(height * aspectRatio, 0, 90).toString() + "vh";
-        element.style.minHeight = toHTMLPositionPX(minHeight);
-        element.style.minWidth = toHTMLPositionPX(minWidth);
-    }
+    element.style.width = width + "px";
+    element.style.height = height + "px";
+
 }
 function toggleEditingMode() {
     var editingToggle = document.getElementById("editingToggle");
@@ -368,15 +410,13 @@ function openPopup(target) {
         throw new Error("Popup wrapper div did not contain div assigned to class 'popup-content'!");
     }
 
-    if (popup.id == "settings") {
-        setPopupSize(popup, 75, 50, 0, 0, false);
-    } else if (popup.id == "color-picker") {
-        setPopupSize(popup, 75, 50, 0, 0, false);
-        popup.getElementsByClassName("popup-input")[0].value = ""; //taking the input field and setting the value to an empty string
-    } else if (popup.id == "clear-storage") {
-        setPopupSize(popup, 75, 20, 0, 0, false)
+    let size = null;
+    if (popup.hasAttribute("size")) size = popup.getAttribute("size").split(/[xX]/);
+
+    if (size == null) {
+        setPopupSize(popup, 375, 200);
     } else {
-        setPopupSize(popup, 50, 25, 0, 0, false);
+        setPopupSize(popup, parseInt(size[0]), parseInt(size[1]), 0, 0, true)
     }
 
     window.setTimeout(() => content.style.display = "block", 500);
@@ -405,24 +445,11 @@ function removeMenu(event) {
     }
 }
 
-/*
-    <div id="settings" class="popup">
-        <img src="./images/close.svg" class="close"></img>
-        <div class="popup-content">
-            <div id="websocket-url-input-wrapper">
-                <input type="text" placeholder="ws://127.0.0.1:5800" class="popup-input" id="websocketURL"></input>
-            </div>
-            <div class="apply-container">
-                <button class="apply" onclick="saveSettings()">apply</button>
-            </div>
-        </div>
-    </div>
-    */
-
-function generateSimplePopup(popupName, onApply, inputPlaceholder) {
+function generateSimpleInputPopup(popupName, onApply, inputPlaceholder, labelName) {
     let div = document.createElement("div");
     div.id = popupName;
     div.setAttribute("class", "popup");
+    div.setAttribute("size", "300x200");
     let cls = document.createElement("img");
     cls.setAttribute("class", "close");
     cls.setAttribute("src", "./images/close.svg")
@@ -430,11 +457,18 @@ function generateSimplePopup(popupName, onApply, inputPlaceholder) {
     let content = document.createElement("div");
     content.setAttribute("class", "popup-content");
     div.appendChild(content);
+    let inputWrapper = document.createElement("div");
+    inputWrapper.setAttribute("class", "simple-input-wrapper");
+    content.append(inputWrapper)
+    let label = document.createElement("p");
+    label.setAttribute("class", "input-label");
+    label.innerHTML = labelName ?? "set property";
+    inputWrapper.appendChild(label);
     let input = document.createElement("input");
     input.setAttribute("type", "text");
     input.setAttribute("placeholder", inputPlaceholder);
     input.setAttribute("class", "popup-input");
-    content.appendChild(input);
+    inputWrapper.appendChild(input);
     let applyContainer = document.createElement("div");
     applyContainer.setAttribute("class", "apply-container");
     content.appendChild(applyContainer);
@@ -447,11 +481,24 @@ function generateSimplePopup(popupName, onApply, inputPlaceholder) {
 
     let opener = document.createElement("a");
     opener.setAttribute("popup", popupName);
+    opener.id = `open-${popupName}`;
     opener.style.display = "none";
     document.body.appendChild(opener);
 
     return div;    
 }
+
+function populatePopupList(popup, iterables, getName, getOnclick) {
+    let listContainer = popup.getElementsByClassName("list-container")[0];
+    for (let i = 0; i < iterables.length; i++) {
+        let a = document.createElement("a");
+        a.setAttribute("class", "default-text carousel-item selectable layout-selector-button");
+        a.innerHTML = getName(iterables[i]);
+        a.onclick = getOnclick(iterables[i]);
+        listContainer.appendChild(a);
+    }
+}
+
 
 function generateMenuButton(parent, name, onclick) {
     let button = document.createElement("a");
@@ -466,12 +513,12 @@ function generateMenuButton(parent, name, onclick) {
     button.className = "menu-button";
     parent.appendChild(button);
 }
-function generateRightClickMenu(event) {
+function generateContextMenu(event) {
     removeMenu();
     event.preventDefault();
     let container = document.createElement("div");
     container.id = "menu-container";
-    container.style = "left: " + mouseVector.x + "px; top: " + mouseVector.y + "px";
+    container.style = "left: " + mousePosition.x + "px; top: " + mousePosition.y + "px";
     if (event.target.classList.contains("whiteboard-draggable")) {
         currentDraggable = event.target;
         if (elementEditing) {
@@ -479,11 +526,11 @@ function generateRightClickMenu(event) {
             generateMenuButton(container, "set id", () => document.getElementById("open-id-changer").click());
             generateMenuButton(container, "set color", () => document.getElementById("open-color-picker").click());
             generateMenuButton(container, "set size", () => document.getElementById("open-size-picker").click());
-            generateMenuButton(container, "set element type", () => document.getElementById("open-type-changer").click());
+            generateMenuButton(container, "set element type", () => document.getElementById("open-type-setter").click());
             generateMenuButton(container, "duplicate", () => duplicate(draggables[getDraggableIndex(currentDraggable)]));
         }    
     } else if (event.target.id == "whiteboard-border") {
-        generateMenuButton(container, "set whiteboard size", () => document.querySelectorAll('[popup="set-whiteboard-size"]')[0].click());
+        generateMenuButton(container, "set whiteboard size", () => document.getElementById("open-whiteboard-size-setter").click());
     } else if (event.target.classList.contains("layout-selector-button")) {
         if (event.target.innerHTML !== "default") {
             generateMenuButton(container, "delete", () => {removeLayout(event.target.innerHTML); event.target.remove()});
@@ -499,7 +546,7 @@ function clickCloseBtn() {
     }
 }
 function duplicate(draggable) {
-    draggables.push(new WhiteboardDraggable(draggable.name, new Vector2d(0, 0), draggable.size, draggable.color, draggable.type, draggable.id));
+    draggables.push(new WhiteboardDraggable(getDraggableName(draggable), new Vector2d(0, 0), draggable.size, draggable.color, draggable.type, draggable.id));
 }
 function changeID() {
     let id = activePopup.getElementsByClassName("popup-input")[0].value;
@@ -518,6 +565,10 @@ function setDraggableSize() {
     width = parseInt(size[0]);
     height = parseInt(size[1]);
     draggables[getDraggableIndex(currentDraggable)].setSize(new Vector2d(width, height));
+    clickCloseBtn();
+}
+function setType(type) {
+    draggables[getDraggableIndex(currentDraggable)].setType(type);
     clickCloseBtn();
 }
 function setWhiteBoardSize() {
@@ -579,6 +630,9 @@ function removeAllLayouts() {
     for (let i = 0; i < layoutNames.length; i++) {
         removeLayout(layoutNames[i]);
     }
+    openJSON("webdashboard:default");
+    clearLayout();
+    defaultSave();
     clickCloseBtn();
 }
 function updateCurrentLayout(name) {
@@ -601,9 +655,15 @@ function getJSON() {
     return data;
 }
 
+function getDraggableName(draggable) {
+    let name = draggable.label.value;
+    draggable.setName(name);
+    return name;
+}
+
 function saveJSON() {
     for (let i = 0; i < draggables.length; i++) {
-        draggables[i].setName(draggables[i].label.value);
+        getDraggableName(draggables[i]);
     }
     let name = activePopup.getElementsByClassName("popup-input")[0].value;
     updateCurrentLayout(name);    
@@ -612,13 +672,13 @@ function saveJSON() {
 }
 function defaultSave() {
     for (let i = 0; i < draggables.length; i++) {
-        draggables[i].setName(draggables[i].label.value);
+        getDraggableName(draggables[i]);
     }
     localStorage.setItem(`webdashboard:${currentLayout}`, getJSON())
 }
 function selectJSON(event) {
     let activePopup = getPopup(event.target);
-    let carousel = activePopup.getElementsByClassName("selectable-carousel-container")[0];
+    let carousel = activePopup.getElementsByClassName("list-container")[0];
     carousel.innerHTML = "";
     let layoutNames = listLayoutNames();
     for (let i = 0; i < layoutNames.length; i++) {
@@ -634,6 +694,9 @@ function clearLayout() {
     for (let i = 0; i < iterations; i++) {
         draggables[0].delete(); //Every time delete() is called, a new draggable will fall into the 0 slot in the array
     }
+    let border = document.getElementById("whiteboard-border");
+    border.style.removeProperty("width");
+    border.style.removeProperty("height");
 }
 
 function openJSON(key) {
@@ -653,7 +716,8 @@ function openJSON(key) {
             let size = data.draggableData[i].size;
             let color = data.draggableData[i].color;
             let type = data.draggableData[i].type;
-            draggables.push(new WhiteboardDraggable(name, position, size, color, type, ""));
+            let id = data.draggableData[i].id;
+            draggables.push(new WhiteboardDraggable(name, position, size, color, type, id));
         }
     } catch (err) {
         console.warn(err);
@@ -662,6 +726,4 @@ function openJSON(key) {
     toggleEditingMode();
     toggleEditingMode();
 }
-function clearSavedSettings() {
-    localStorage.clear();
-}
+
