@@ -1,8 +1,5 @@
 var socket;
 
-
-var currentNotice = null;
-
 class Notice {
     constructor(message, type, duration) {
         let color = "gray";
@@ -28,9 +25,7 @@ class Notice {
 
 
         this.fadeInAnimation = [{opacity: 0}, {opacity: 1}];
-
         this.fadeOutAnimation = [{opacity: 1}, {opacity: 0}];
-
         this.fadeTiming = {duration: 500, iterations: 1};
 
         this.fadeSequence();
@@ -52,7 +47,7 @@ class Notice {
 
         });
         fadeIn.then(() => {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 setTimeout(() => {
                 this.container.animate(this.fadeOutAnimation, this.fadeTiming).finished.then(() => resolve());
             }, this.duration)
@@ -63,7 +58,7 @@ class Notice {
 
 }
 function createNotice(message, type, duration) {
-    currentNotice = new Notice(message, type, duration);
+    new Notice(message, type, duration);
 }
 function openSocket(recursion) {
     if (recursion == 0) {
@@ -311,9 +306,9 @@ function initialize() {
         }
     });
 
-    generateSimpleInputPopup("whiteboard-size-setter", setWhiteBoardSize, "750x500", "border size");
-    generateSimpleInputPopup("size-picker", setDraggableSize, "100x100", "draggable size");
-    generateSimpleInputPopup("color-picker", changeColor, "#ffffff", "draggable color");
+    generateSimpleInputPopup("whiteboard-size-setter", setWhiteBoardSize, "750x500", "border size", false);
+    generateSimpleInputPopup("size-picker", setDraggableSize, "100x100", "draggable size", false);
+    generateSimpleInputPopup("color-picker", changeColor, "#ffffff", "draggable color", false);
 
     populatePopupList(document.getElementById("type-setter"), ["button", "toggle", "boolean telemetry", "text telemetry"], (iterable) => iterable, (iterable) => {return () => setType(iterable)});
 
@@ -445,7 +440,7 @@ function removeMenu(event) {
     }
 }
 
-function generateSimpleInputPopup(popupName, onApply, inputPlaceholder, labelName) {
+function generateSimpleInputPopup(popupName, onApply, inputPlaceholder, labelName, userOpened) {
     let div = document.createElement("div");
     div.id = popupName;
     div.setAttribute("class", "popup");
@@ -479,11 +474,13 @@ function generateSimpleInputPopup(popupName, onApply, inputPlaceholder, labelNam
     applyContainer.appendChild(apply);
     document.body.appendChild(div);
 
-    let opener = document.createElement("a");
-    opener.setAttribute("popup", popupName);
-    opener.id = `open-${popupName}`;
-    opener.style.display = "none";
-    document.body.appendChild(opener);
+    if (!userOpened) {
+        let opener = document.createElement("a");
+        opener.setAttribute("popup", popupName);
+        opener.id = `open-${popupName}`;
+        opener.style.display = "none";
+        document.body.appendChild(opener);
+    }
 
     return div;    
 }
