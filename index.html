@@ -5,6 +5,14 @@
     <title>Web Dashboard</title>
     <link rel="icon" type="image/x-icon" href="./images/Logo.png">
     <link rel="stylesheet" href="./css/main.css">
+    <script type="text/javascript" src="./javascript/utils/event_checker.js"></script>
+    <script type="text/javascript" src="./javascript/utils/popup/popup_tasks.js"></script>
+    <script type="text/javascript" src="./javascript/utils/popup/popup.js"></script>
+    <script type="text/javascript" src="./javascript/utils/draggable.js"></script>
+    <script type="text/javascript" src="./javascript/utils/notify.js"></script>
+    <script type="text/javascript" src="./javascript/utils/positioning.js"></script>
+    <!--This should be the last script imported.-->
+    <script type="text/javascript" src="./javascript/main.js"></script>
 </head>
 
 <body onload="initialize()">
@@ -28,7 +36,7 @@
                     <a class="dropdown-option">Redo</a>
                     <a class="dropdown-option" onclick="clearLayout()">clear layout</a>
                     <a class="dropdown-option" id="editingToggle" onclick="toggleEditingMode()">turn on editing mode</a>
-                    <a class="dropdown-option" onclick="addDefaultDraggable()">add element</a>
+                    <a class="dropdown-option" onclick="window.Draggable.addDefaultDraggable()">add element</a>
                 </div>
             </div>
             <div class="dropdown">
@@ -48,7 +56,7 @@
     <div id="popup-background"></div>
 
     <div id="settings" class="popup">
-        <img src="./images/close.svg" class="close"></img>
+        
         <div class="popup-content">
             <div id="websocket-url-input-wrapper">
                 <input type="text" placeholder="ws://127.0.0.1:5800" class="popup-input" id="websocketURL"></input>
@@ -59,7 +67,7 @@
         </div>
     </div>
     <div id="save-layout" class="popup">
-        <img src="./images/close.svg" class="close"></img>
+        
         <div class="popup-content">
             <div id="layout-input-wrapper">
                 <input type="text" placeholder="Enter the name of your layout" class="popup-input" style="width: 250px"></input>
@@ -70,13 +78,13 @@
         </div>
     </div>
     <div id="open-layout" class="popup">
-        <img src="./images/close.svg" class="close"></img>
+        
         <div class="popup-content">
             <div class="list-container" id="select-json-container"></div>
         </div>
     </div>
     <div id="clear-storage" class="popup">
-        <img src="./images/close.svg" class="close"></img>
+        
         <div class="popup-content">
             <div class="prompt-container">
                 <p class="prompt">Are you sure you want to delete all layouts?</p>
@@ -87,24 +95,25 @@
         </div>
     </div>
     <div id="id-changer" class="popup" code-opened="true">
-        <img src="./images/close.svg" class="close"></img>
+        
         <div class="popup-content">
             <div id="color-input-wrapper">
                 <input type="text" placeholder="" class="popup-input"></input>
             </div>
             <div class="apply-container">
-                <button class="apply" onclick="changeID()">apply</button>
+                <button class="apply" onclick="window.PopupTasks.changeID()">apply</button>
             </div>
         </div>
     </div>
     <div id="type-setter" class="popup" code-opened="true">
-        <img src="./images/close.svg" class="close"></img>
+        
         <div class="popup-content">
             <div class="list-container" id="select-json-container"></div>
         </div>
     </div>
     </div>
-    <script type="text/javascript" src="./javascript/main.js"></script>
+    <div id="draggable-properties-setter" class="popup" code-opened="true">        
+    </div>
 </body>
 
 </html>
