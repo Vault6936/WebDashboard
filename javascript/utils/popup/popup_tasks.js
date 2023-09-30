@@ -1,38 +1,72 @@
 var PopupTasks = {
     changeID: function () {
-        let id = window.Popup.activePopup.getElementsByClassName("popup-input")[0].value;
-        draggables[window.Draggable.getDraggableIndex(window.Draggable.currentDraggable)].setId(id);
-        window.Popup.clickCloseBtn();
+        Whiteboard.logChange();
+        let id = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        Whiteboard.currentDraggable.setId(id);
+        Popup.clickCloseBtn();
     },
 
     changeColor: function () {
-        let color = window.Popup.activePopup.getElementsByClassName("popup-input")[0].value;
-        window.Draggable.currentDraggable.style.background = color;
-        draggables[window.Draggable.currentDraggable.getAttribute("index")].color = color;
-        window.Popup.clickCloseBtn();
+        Whiteboard.logChange();
+        let color = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        Whiteboard.currentDraggable.setColor(color);
+        Popup.clickCloseBtn();
     },
 
     setDraggableSize: function () {
-        let size = window.Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        Whiteboard.logChange();
+        let size = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
         size = size.split(/[Xx]/);
         width = parseInt(size[0]);
         height = parseInt(size[1]);
-        draggables[window.Draggable.getDraggableIndex(window.Draggable.currentDraggable)].setSize(new window.Positioning.Vector2d(width, height));
-        window.Popup.clickCloseBtn();
+        Whiteboard.currentDraggable.setSize(new Positioning.Vector2d(width, height));
+        Popup.clickCloseBtn();
     },
 
     setType: function (type) {
-        draggables[window.Draggable.getDraggableIndex(window.Draggable.currentDraggable)].setType(type);
-        window.Popup.clickCloseBtn();
+        Whiteboard.logChange();
+        Whiteboard.currentDraggable.setType(type);
+        Popup.clickCloseBtn();
     },
 
     setWhiteBoardBorderSize: function () {
-        let size = window.Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        Whiteboard.logChange();
+        let size = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
         size = size.split(/[Xx]/);
         let border = document.getElementById("whiteboard-border");
-        border.style.width = window.Positioning.toHTMLPositionPX(size[0]);
-        border.style.height = window.Positioning.toHTMLPositionPX(size[1]);
-        window.Popup.clickCloseBtn();    
+        border.style.width = Positioning.toHTMLPositionPX(size[0]);
+        border.style.height = Positioning.toHTMLPositionPX(size[1]);
+        Popup.clickCloseBtn();    
+    },
+
+    renameLayout: function () {
+        let toBeRenamed = Popup.selected.innerHTML;
+        let name = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        try {
+            let layoutNames = listLayoutNames();
+            let duplicateName = false;
+            for (let i = 0; i < layoutNames.length; i++) {
+                if (layoutNames[i] === name) {
+                    duplicateName = true;
+                }
+            }
+            if (duplicateName) {
+                Notify.createNotice("That layout name already exists!", "negative", 2500);
+            } else {
+                if (currentLayout === toBeRenamed) {
+                    updateCurrentLayout(name);
+                }
+                data = localStorage.getItem("webdashboard:" + toBeRenamed);
+                localStorage.removeItem("webdashboard:" + toBeRenamed);
+                localStorage.setItem("webdashboard:" + name, data);
+                Popup.selected.innerHTML = name;
+            }
+
+        } catch(err) {
+            console.log(err);
+            Notify.createNotice("Could not rename layout!  Try reloading the page.", "negative", 2500);
+        }
+        Popup.clickCloseBtn(); 
     },
 };
 

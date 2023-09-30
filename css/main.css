@@ -313,7 +313,8 @@ body {
     grid-template-columns: 250px;
     grid-template-rows: min-content;
     max-height: calc(100% - 50px);
-    overflow: scroll;
+    overflow-x: hidden;
+    overflow-y: scroll;
     background-color: #ebebe0;
 }
 
@@ -339,6 +340,8 @@ body {
     position: absolute;
     display: flex;
     top: 25px;
+    padding-left: 15px;
+    padding-right: 15px;
     width: 400px;
     height: 50px;
     right: 0px;
@@ -349,7 +352,7 @@ body {
     opacity: 0;
 }
 
-.notice-text-container {
+.notice-text-wrapper {
     display: inline-block;
     position: absolute;
     top: 0px;
@@ -357,7 +360,6 @@ body {
     right: 0px;
     left: 0px;
     margin: auto;
-    width: 100%;
     height: min-content;
 }
 

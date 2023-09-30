@@ -1,13 +1,14 @@
 var Popup = {
     activePopup : null,
 
-    openPopup: function (target) {
+    openPopupByOpener: function (target) {
         let popup = document.getElementById(target.getAttribute("popup"));
+        popup.setAttribute("open", true);
         let animated = popup.getElementsByClassName("popup-animated");
         for (i = 0; i < animated.length; i++) {
             animated.style.opacity = "100%";
         }
-        window.Popup.activePopup = popup;
+        Popup.activePopup = popup;
         closeBtn = popup.getElementsByClassName("close")[0];
         let contentArray = popup.getElementsByClassName("popup-content");
         let content = null;
@@ -21,12 +22,12 @@ var Popup = {
         if (popup.hasAttribute("size")) size = popup.getAttribute("size").split(/[xX]/);
     
         if (size == null) {
-            window.Popup.setPopupSize(popup, 375, 200);
+            Popup.setPopupSize(popup, 375, 200);
         } else {
-            window.Popup.setPopupSize(popup, parseInt(size[0]), parseInt(size[1]), 0, 0, true)
+            Popup.setPopupSize(popup, parseInt(size[0]), parseInt(size[1]), 0, 0, true)
         }
     
-        window.setTimeout(() => content.style.display = "block", 500);
+        setTimeout(() => content.style.display = "block", 500);
         
         popup.setAttribute("z-index", "1");
         closeBtn.style.display = "block";
@@ -34,12 +35,16 @@ var Popup = {
         popupBackground.setAttribute("z-index", "0");
     },
 
-    closePopup: function (target) {
+    openPopupByOpenerId: function(id) {
+        Popup.openPopupByOpener(document.getElementById(id));
+    },
+
+    closePopupByCloser: function (target) {
         let popup = target.parentElement;
+        popup.setAttribute("open", false);
         let content = popup.getElementsByClassName("popup-content")[0];
         content.style.display = "none";
-        window.Popup.activePopup = null;
-        window.Popup.setPopupSize(popup, 0, 0, false);
+        Popup.setPopupSize(popup, 0, 0, false);
         popupBackground.style.display = "none";
         target.style.display = "none";
     },
@@ -117,14 +122,14 @@ var Popup = {
             let cls = document.createElement("img");
             cls.setAttribute("class", "close");
             cls.setAttribute("src", "./images/close.svg");
-            cls.addEventListener("click", (event) => {window.Popup.closePopup(event.target)});
+            cls.addEventListener("click", (event) => {Popup.closePopupByCloser(event.target)});
             popups[i].appendChild(cls);
         }
     
         popupBackground = document.getElementById("popup-background");
         popupOpeners = document.querySelectorAll("[popup]"); //grabs all elements with a popup attribute
         for (let i = 0; i < popupOpeners.length; i++) {
-            popupOpeners[i].addEventListener("click", (event) => {window.Popup.openPopup(event.target)})
+            popupOpeners[i].addEventListener("click", (event) => {Popup.openPopupByOpener(event.target)})
         }
     },
 
@@ -134,11 +139,13 @@ var Popup = {
 
     clickCloseBtn: function () {
         try {
-            window.Popup.activePopup.getElementsByClassName("close")[0].click();
+            Popup.activePopup.getElementsByClassName("close")[0].click();
         } catch {
             console.warn("Could not close popup.");
         }
     },
+
+    selected: null,
 };
 
-window.Popup = Popup || {};
+Popup = Popup || {};

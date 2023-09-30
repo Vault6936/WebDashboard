@@ -27,14 +27,14 @@ var CustomEventChecker = {
     eventCheckers: [],
 
     addEventChecker: function(checker) {
-        window.CustomEventChecker.eventCheckers.push(checker);
+        CustomEventChecker.eventCheckers.push(checker);
     },
 };
 
 window.CustomEventChecker = CustomEventChecker || {};
 
 setInterval(() => {
-    for (let i = 0; i < window.CustomEventChecker.eventCheckers.length; i++) {
-        window.CustomEventChecker.eventCheckers[i].check();
+    for (let i = 0; i < CustomEventChecker.eventCheckers.length; i++) {
+        CustomEventChecker.eventCheckers[i].check();
     }
 }, 20);

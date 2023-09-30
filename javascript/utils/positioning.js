@@ -10,6 +10,9 @@ var Positioning = {
             this.x = x;
             this.y = y;
         }
+        equals(vector) {
+            return parseInt(vector.x) == parseInt(this.x) && parseInt(vector.y) == parseInt(this.y);
+        }
     },
 
     mousePosition: null,

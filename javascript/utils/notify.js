@@ -10,7 +10,7 @@ var Notify = {
             this.message = message;
             this.container = document.createElement("div");
             let textContainer = document.createElement("div");
-            textContainer.classList.add("notice-text-container");
+            textContainer.classList.add("notice-text-wrapper");
             let p = document.createElement("p");
             p.classList.add("default-text");
             p.classList.add("notice");
@@ -56,7 +56,7 @@ var Notify = {
     },
 
     createNotice: function (message, type, duration) {
-        new window.Notify.Notice(message, type, duration);
+        new Notify.Notice(message, type, duration);
     },
 };
 
