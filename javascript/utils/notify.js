@@ -46,7 +46,7 @@ var Notify = {
             fadeIn.then(() => {
                 return new Promise((resolve) => {
                     setTimeout(() => {
-                    this.container.animate(this.fadeOutAnimation, this.fadeTiming).finished.then(() => resolve());
+                    this.container.animate(this.fadeOutAnimation, this.fadeTiming).finished.then(() => resolve()); //https://developer.mozilla.org/en-US/docs/Web/API/Animation/finished
                 }, this.duration)
             }
             )}).then(() => this.container.remove());

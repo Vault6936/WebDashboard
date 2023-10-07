@@ -20,7 +20,7 @@ var Save = {
     },
     
     
-    removeAllLayouts: function () {
+    removeAllLayouts: function (event) {
         let layoutNames = Save.listLayoutNames();
         for (let i = 0; i < layoutNames.length; i++) {
             Save.removeLayout(layoutNames[i]);
@@ -28,8 +28,8 @@ var Save = {
         Save.openJSONLayout("webdashboard:default");
         Save.clearLayout();
         Whiteboard.States.clearTimeline();
-        Save.defaultSave();
-        Popup.clickCloseBtn();
+        Save.defaultSave(notify=false);
+        Popup.closePopup(Popup.getPopupFromChild(event.target));
     },
 
     updateCurrentLayout: function (name) {
@@ -58,36 +58,35 @@ var Save = {
         return name;
     },
     
-    saveJSON: function () {
+    saveJSON: function (event) {
+        let popup = Popup.getPopupFromChild(event.target);
         for (let i = 0; i < Whiteboard.draggables.length; i++) {
             Save.getDraggableName(Whiteboard.draggables[i]);
         }
-        let name = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        let name = popup.getElementsByClassName("popup-input")[0].value;
         Save.updateCurrentLayout(name);    
         localStorage.setItem("webdashboard:" + name, Save.getJSON());
-        Popup.clickCloseBtn();
+        Popup.closePopup(popup);
     },
 
-    defaultSave: function () {
+    defaultSave: function (notify=true) {
         for (let i = 0; i < Whiteboard.draggables.length; i++) {
             Save.getDraggableName(Whiteboard.draggables[i]);
         }
-        localStorage.setItem(`webdashboard:${currentLayout}`, Save.getJSON())
+        localStorage.setItem(`webdashboard:${currentLayout}`, Save.getJSON());
+        if (notify) Notify.createNotice("Layout saved!", "positive", 3000);
     },
 
     selectJSON: function (event) {
-        Popup.activePopup = Popup.getPopupByOpener(event.target);
-        let thisPopup = Popup.activePopup;
-        let carousel = Popup.activePopup.getElementsByClassName("list-container")[0];
-        carousel.innerHTML = "";
+        let popup = Popup.getPopupByOpener(event.target);
+        console.log(popup);
+        let listContainer = document.getElementById("select-json-container");
+        listContainer.innerHTML = "";
         let layoutNames = Save.listLayoutNames();
-        for (let i = 0; i < layoutNames.length; i++) {
-            let a = document.createElement("a");
-            a.setAttribute("class", "default-text carousel-item selectable layout-selector-button");
-            a.innerHTML = layoutNames[i];
-            a.onclick = () => {Save.openJSONLayout(`webdashboard:${a.innerHTML}`); Popup.closePopupByCloser(thisPopup.getElementsByClassName("close")[0])};
-            carousel.appendChild(a);
-        }
+        Popup.populatePopupClickableList(document.getElementById("select-json-container"), layoutNames, (name) => name, (name, self) => {return () => {
+                Save.openJSONLayout(`webdashboard:${self.innerHTML}`); Popup.closePopup(popup);
+            }
+        });
     },
 
     getJSON: function () {
@@ -102,7 +101,6 @@ var Save = {
 
     openJSONLayout: function (key) {
         Save.updateCurrentLayout(key.replace(/webdashboard:/, ""));
-        Popup.clickCloseBtn();
         Save.clearLayout(logChange=false);
         try {
             let data = localStorage.getItem(key);
@@ -134,7 +132,7 @@ var Save = {
         }
     },
 
-    clearLayout: function (logChange = true) {
+    clearLayout: function (logChange=true) {
         if (logChange) Whiteboard.logChange();
         iterations = Whiteboard.draggables.length; //must be set here, because calling delete() continually updates Draggable.draggables.length
         for (let i = 0; i < iterations; i++) {

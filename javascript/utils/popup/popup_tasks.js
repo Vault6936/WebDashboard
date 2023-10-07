@@ -1,49 +1,62 @@
 var PopupTasks = {
-    changeID: function () {
+    changeID: function (event) {
         Whiteboard.logChange();
-        let id = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        let id = popup.getElementsByClassName("popup-input")[0].value;
         Whiteboard.currentDraggable.setId(id);
-        Popup.clickCloseBtn();
+        Popup.closePopup(popup);
     },
 
-    changeColor: function () {
+    changeColor: function (event) {
         Whiteboard.logChange();
-        let color = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        let popup = Popup.getPopupFromChild(event.target);
+        let color = popup.getElementsByClassName("popup-input")[0].value;
         Whiteboard.currentDraggable.setColor(color);
-        Popup.clickCloseBtn();
+        Popup.closePopup(popup);
     },
 
-    setDraggableSize: function () {
+    setDraggableSize: function (event) {
         Whiteboard.logChange();
-        let size = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        let popup = Popup.getPopupFromChild(event.target);
+        let size = popup.getElementsByClassName("popup-input")[0].value;
         size = size.split(/[Xx]/);
         width = parseInt(size[0]);
         height = parseInt(size[1]);
         Whiteboard.currentDraggable.setSize(new Positioning.Vector2d(width, height));
-        Popup.clickCloseBtn();
+        Popup.closePopup(popup);
     },
 
-    setType: function (type) {
+    setPosition: function(event) {
+        Whiteboard.logChange();
+        let popup = Popup.getPopupFromChild(event.target);
+        const x = parseInt(document.getElementById("x-pose-input").getElementsByClassName("popup-input")[0].value);
+        const y = parseInt(document.getElementById("y-pose-input").getElementsByClassName("popup-input")[0].value);
+        Whiteboard.currentDraggable.setPosition(new Positioning.Vector2d(x, y));
+        Popup.closePopup(popup);
+    },
+
+    setType: function (event, type) {
         Whiteboard.logChange();
         Whiteboard.currentDraggable.setType(type);
-        Popup.clickCloseBtn();
+        Popup.closePopup(Popup.getPopupFromChild(event.target));
     },
 
-    setWhiteBoardBorderSize: function () {
+    setWhiteBoardBorderSize: function (event) {
         Whiteboard.logChange();
-        let size = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        let popup = Popup.getPopupFromChild(event.target);
+        let size = popup.getElementsByClassName("popup-input")[0].value;
         size = size.split(/[Xx]/);
         let border = document.getElementById("whiteboard-border");
         border.style.width = Positioning.toHTMLPositionPX(size[0]);
         border.style.height = Positioning.toHTMLPositionPX(size[1]);
-        Popup.clickCloseBtn();    
+        Popup.closePopup(popup);    
     },
 
-    renameLayout: function () {
+    renameLayout: function (event) {
         let toBeRenamed = Popup.selected.innerHTML;
-        let name = Popup.activePopup.getElementsByClassName("popup-input")[0].value;
+        let popup = Popup.getPopupFromChild(event.target);
+        let name = popup.getElementsByClassName("popup-input")[0].value;
         try {
-            let layoutNames = listLayoutNames();
+            let layoutNames = Save.listLayoutNames();
             let duplicateName = false;
             for (let i = 0; i < layoutNames.length; i++) {
                 if (layoutNames[i] === name) {
@@ -54,7 +67,7 @@ var PopupTasks = {
                 Notify.createNotice("That layout name already exists!", "negative", 2500);
             } else {
                 if (currentLayout === toBeRenamed) {
-                    updateCurrentLayout(name);
+                    Save.updateCurrentLayout(name);
                 }
                 data = localStorage.getItem("webdashboard:" + toBeRenamed);
                 localStorage.removeItem("webdashboard:" + toBeRenamed);
@@ -66,7 +79,7 @@ var PopupTasks = {
             console.log(err);
             Notify.createNotice("Could not rename layout!  Try reloading the page.", "negative", 2500);
         }
-        Popup.clickCloseBtn(); 
+        Popup.closePopup(popup); 
     },
 };
 
