@@ -8,7 +8,7 @@ var Popup = {
         }
 
         let animation = [{width: "0px", height: "0px"}, {width: popup.style.width, height: popup.style.height}];
-        let timing = {duration: 500, iterations: 1};
+        let timing = {duration: 300, iterations: 1};
 
         popup.animate(animation, timing).finished.then(() => {        
             for (let i = 0; i < popup.children.length; i++) {
@@ -27,7 +27,7 @@ var Popup = {
 
     closePopup: function (popup) {
         let animation = [{width: popup.style.width, height: popup.style.height}, {width: "0px", height: "0px"}];
-        let timing = {duration: 500, iterations: 1};
+        let timing = {duration: 300, iterations: 1};
 
         popup.animate(animation, timing).finished.then(() => popup.style.display = "none");
 

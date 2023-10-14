@@ -9,19 +9,22 @@ function openSocket(recursion) {
         recursion = 0;
         Notify.createNotice("Attempting to connect to the RoboRio...", "neutral", 3000);
     }
-    socket = new WebSocket(websocketURL);
+    try {
+        socket = new WebSocket(websocketURL);
+    } catch {
+        console.error("Error creating websocket.")
+    }
     socket.onopen = () => {
         connecting = false;
         Notify.createNotice("Connected to the RoboRio!", "positive", 8000);
         document.getElementById("status-container").style.backgroundColor = "limegreen";
         document.getElementById("status").innerHTML = "connected";
-        setInterval(() => {try {socket.send("ping")} catch {}}, 10000);
     };
     socket.onmessage = (event) => {Notify.createNotice("Received message from the RoboRio!", "positive", 8000); handleMessage(event.data)};
     if (recursion < 1) {
-        socket.onerror = () => {Notify.createNotice("Could not connect to the RoboRio!", "negative", 8000); openSocket(recursion + 1)};
+        socket.onerror = () => {Notify.createNotice("Could not connect to the RoboRio!", "negative", 8000); openSocket(recursion + 1); console.clear()};
     } else {
-        socket.onerror = () => {openSocket(recursion + 1)}
+        socket.onerror = () => {openSocket(recursion + 1); console.clear()}
     }
 }
 
@@ -80,6 +83,7 @@ addEventListener("disconnected", () => {
 
 function initialize() { //This is called when the body portion of the html document loads
     let banner = document.getElementById("banner-container");
+    setInterval(() => {try {socket.send("ping")} catch {}}, 10000);
     setTimeout(() => {banner.style.top = "-100%"; setTimeout(() => banner.style.display = "none", 2000)}, 500);
     addMasterEventListeners();
 
