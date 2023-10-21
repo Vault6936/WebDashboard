@@ -6,26 +6,20 @@ import org.java_websocket.drafts.Draft;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Objects;
 
 public class SocketServer extends WebSocketServer {
 
     public SocketServer(int port) throws UnknownHostException {
         super(new InetSocketAddress(port));
-        setReuseAddr(true);
-    }
-
-    public SocketServer(InetSocketAddress address) {
-        super(address);
-        setReuseAddr(true);
-    }
-
-    public SocketServer(int port, Draft_6455 draft) {
-        super(new InetSocketAddress(port), Collections.<Draft>singletonList(draft));
         setReuseAddr(true);
     }
 
@@ -41,7 +35,10 @@ public class SocketServer extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String message) {
-        if (message == "ping") conn.send("pong");
+        if (Objects.equals(message, "")) {
+
+        }
+        if (Objects.equals(message, "ping")) conn.send("pong");
         System.out.println(message);
     }
 
@@ -63,6 +60,14 @@ public class SocketServer extends WebSocketServer {
     public void onStart() {
         System.out.println("Server started");
         setConnectionLostTimeout(1);
+    }
+
+    private void handleMessage(String msg) throws ParseException {
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(msg);
+        if (Objects.equals(json.get("message"), "layout state")) {
+
+        }
     }
 
 }
