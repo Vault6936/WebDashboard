@@ -165,7 +165,6 @@ var Whiteboard = {
                 this.div.innerHTML = this.state;
             }
             this.type = type;
-            this.setId();
             if (type != "text telemetry") {
                 this.div.innerHTML = "";
             }
@@ -179,7 +178,7 @@ var Whiteboard = {
             }
             this.div.id = id;
             this.id = id;
-            this.div.title = (`ID: ${id}`); //I LOVE string interpolation
+            this.div.title = (`ID: ${id}`);
         }
         setColor(color) {
             this.color = color;

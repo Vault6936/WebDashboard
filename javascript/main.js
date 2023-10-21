@@ -155,6 +155,8 @@ function generateContextMenu(event) {
                 generateContextMenuButton(container, "rename", () => {Popup.openPopup("layout-renamer")});
                 generateContextMenuButton(container, "set as default", () => {PopupTasks.setAsDefault(event.target)});
             }
+            generateContextMenuButton(container, "export json", () => {});
+            generateContextMenuButton(container, "import json", () => {});
         }
     }
     document.body.appendChild(container);
