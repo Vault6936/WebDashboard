@@ -2,30 +2,37 @@ package com.vault6936;
 
 
 import org.java_websocket.WebSocket;
-import org.java_websocket.drafts.Draft;
-import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.stream.JsonParser;
+import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
-public class SocketServer extends WebSocketServer {
+public class WebdashboardServer extends WebSocketServer {
 
-    public SocketServer(int port) throws UnknownHostException {
+    ArrayList<HashMap<WebSocket, String>> lastLayoutStates;
+
+    private static WebdashboardServer instance = null;
+
+    private WebdashboardServer(int port) throws UnknownHostException {
         super(new InetSocketAddress(port));
         setReuseAddr(true);
+        start();
     }
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        broadcast("{\"button0\": \"hi\"}");
+
     }
 
     @Override
@@ -35,17 +42,16 @@ public class SocketServer extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String message) {
-        if (Objects.equals(message, "")) {
-
+        if (Objects.equals(message, "ping")) {
+            conn.send("pong");
+            return;
         }
-        if (Objects.equals(message, "ping")) conn.send("pong");
-        System.out.println(message);
-    }
+        JsonReader reader = Json.createReader(new StringReader(message));
+        JsonObject object = reader.readObject();
+        if (Objects.equals(object.getString("messageType", ""), "layout state")) {
+            System.out.println("got a layout state message");
+        }
 
-    @Override
-    public void onMessage(WebSocket conn, ByteBuffer message) {
-        broadcast(message.array());
-        System.out.println(conn + ": " + message);
     }
 
     @Override
@@ -62,12 +68,15 @@ public class SocketServer extends WebSocketServer {
         setConnectionLostTimeout(1);
     }
 
-    private void handleMessage(String msg) throws ParseException {
-        JSONParser parser = new JSONParser();
-        JSONObject json = (JSONObject) parser.parse(msg);
-        if (Objects.equals(json.get("message"), "layout state")) {
-
+    public static WebdashboardServer getInstance(int port) {
+        if (instance == null) {
+            try {
+                instance = new WebdashboardServer(port);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
         }
+        return instance;
     }
 
 }

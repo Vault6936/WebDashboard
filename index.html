@@ -5,14 +5,14 @@
     <title>Web Dashboard</title>
     <link rel="icon" type="image/x-icon" href="./images/Logo.png">
     <link rel="stylesheet" href="./css/main.css">
-    <script type="text/javascript" src="./javascript/utils/save.js"></script>
+    <script type="text/javascript" src="./javascript/utils/socket.js"></script>
+    <script type="text/javascript" src="./javascript/utils/load.js"></script>
     <script type="text/javascript" src="./javascript/utils/event_checker.js"></script>
     <script type="text/javascript" src="./javascript/utils/popup/popup_tasks.js"></script>
     <script type="text/javascript" src="./javascript/utils/popup/popup.js"></script>
     <script type="text/javascript" src="./javascript/utils/whiteboard.js"></script>
     <script type="text/javascript" src="./javascript/utils/notify.js"></script>
     <script type="text/javascript" src="./javascript/utils/positioning.js"></script>
-    <!--This should be the last script imported.-->
     <script type="text/javascript" src="./javascript/main.js"></script>
 </head>
 
@@ -27,9 +27,9 @@
                 <button class="dropdown-button">File</button>
                 <div class="dropdown-container">
                     <a class="dropdown-option">customize layout</a>
-                    <a class="dropdown-option" onclick="Save.defaultSave()">save layout</a>
-                    <a class="dropdown-option" popup="save-layout-as" title="Note that since this program uses local storage, data will not carry over to a different browser.  Your settings will not be saved in Firefox if you created them in Chrome!">save layout as</a>
-                    <a class="dropdown-option" onclick="Save.selectJSON(event)" popup="open-layout">open layout</a>
+                    <a class="dropdown-option" onclick="Load.defaultSave()">save layout</a>
+                    <a class="dropdown-option" popup="Load-layout-as" title="Note that since this program uses local storage, data will not carry over to a different browser.  Your settings will not be saved in Firefox if you created them in Chrome!">save layout as</a>
+                    <a class="dropdown-option" onclick="Load.selectJSON(event)" popup="open-layout">open layout</a>
                     <a class="dropdown-option" popup="clear-storage">clear storage</a>
                 </div>
             </div>
@@ -38,7 +38,7 @@
                 <div class="dropdown-container">
                     <a class="dropdown-option" onclick="Whiteboard.undoChange()">Undo</a>
                     <a class="dropdown-option" onclick="Whiteboard.redoChange()">Redo</a>
-                    <a class="dropdown-option" onclick="Save.clearLayout()">clear layout</a>
+                    <a class="dropdown-option" onclick="Load.clearLayout()">clear layout</a>
                     <a class="dropdown-option" id="editingToggle" onclick="toggleEditingMode()">turn on editing mode</a>
                     <a class="dropdown-option" onclick="Whiteboard.addDefaultDraggable()">add element</a>
                 </div>
@@ -72,7 +72,7 @@
         <div class="prompt-container">
             <p class="prompt">Are you sure you want to delete all layouts?  This action cannot be undone.</p>
         </div>
-        <button class="apply" onclick="Save.removeAllLayouts(event)">Yes, nuke them all!</button>
+        <button class="apply" onclick="Load.removeAllLayouts(event)">Do it!</button>
     </div>
     <div id="type-setter" class="popup" style="width: 300px; height: 200px">
         <div class="list-container" id="select-type-container"></div>

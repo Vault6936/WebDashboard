@@ -1,6 +1,7 @@
 var PopupTasks = {
     changeID: function (event) {
         Whiteboard.logChange();
+        let popup = Popup.getPopupFromChild(event.target);
         let id = popup.getElementsByClassName("popup-input")[0].value;
         Whiteboard.currentDraggable.setId(id);
         Popup.closePopup(popup);
@@ -56,7 +57,7 @@ var PopupTasks = {
         let popup = Popup.getPopupFromChild(event.target);
         let name = popup.getElementsByClassName("popup-input")[0].value;
         try {
-            let layoutNames = Save.listLayoutNames();
+            let layoutNames = Load.listLayoutNames();
             let duplicateName = false;
             for (let i = 0; i < layoutNames.length; i++) {
                 if (layoutNames[i] === name) {
@@ -65,9 +66,10 @@ var PopupTasks = {
             }
             if (duplicateName) {
                 Notify.createNotice("That layout name already exists!", "negative", 2500);
+                return;
             } else {
-                if (currentLayout === toBeRenamed) {
-                    Save.updateCurrentLayout(name);
+                if (Load.currentLayout === toBeRenamed) {
+                    Load.updateCurrentLayout(name);
                 }
                 data = localStorage.getItem("webdashboard:" + toBeRenamed);
                 localStorage.removeItem("webdashboard:" + toBeRenamed);
@@ -79,8 +81,24 @@ var PopupTasks = {
             console.log(err);
             Notify.createNotice("Could not rename layout!  Try reloading the page.", "negative", 2500);
         }
-        Popup.closePopup(popup); 
+        Popup.closePopup(popup);
     },
-};
+
+    setAsDefault: function (anchor) {
+        try {
+            let data = localStorage.getItem(`webdashboard:${anchor.innerHTML}`);
+            localStorage.setItem("webdashboard:default", data);
+            Whiteboard.logChange();
+            if (Load.currentLayout == "default") {
+                Load.openJSONLayout("webdashboard:default");
+            }
+            Notify.createNotice("Set the current layout as default", "positive", 3000);
+        } catch (err) {
+            console.log(err);
+            Notify.createNotice("Could not set as default!", "negative", 3000);
+        }
+    },
+
+}
 
 window.PopupTasks = PopupTasks || {};

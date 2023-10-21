@@ -1,4 +1,6 @@
-var Save = {
+var Load = {
+    currentLayout: "default",
+
     listLayoutNames: function () {
         layoutNames = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -21,24 +23,24 @@ var Save = {
     
     
     removeAllLayouts: function (event) {
-        let layoutNames = Save.listLayoutNames();
+        let layoutNames = Load.listLayoutNames();
         for (let i = 0; i < layoutNames.length; i++) {
-            Save.removeLayout(layoutNames[i]);
+            Load.removeLayout(layoutNames[i]);
         }
-        Save.openJSONLayout("webdashboard:default");
-        Save.clearLayout();
+        Load.openJSONLayout("webdashboard:default");
+        Load.clearLayout();
         Whiteboard.States.clearTimeline();
-        Save.defaultSave(notify=false);
+        Load.defaultSave(notify=false);
         Popup.closePopup(Popup.getPopupFromChild(event.target));
     },
 
     updateCurrentLayout: function (name) {
-        currentLayout = name;
+        Load.currentLayout = name;
         let layoutLabel = document.getElementById("layout-name");
-        if (currentLayout === "default") {
+        if (Load.currentLayout === "default") {
             layoutLabel.innerHTML = "default layout";
         } else {
-            layoutLabel.innerHTML = `layout: ${currentLayout}`;
+            layoutLabel.innerHTML = `layout: ${Load.currentLayout}`;
         }
     },
 
@@ -61,50 +63,53 @@ var Save = {
     saveJSON: function (event) {
         let popup = Popup.getPopupFromChild(event.target);
         for (let i = 0; i < Whiteboard.draggables.length; i++) {
-            Save.getDraggableName(Whiteboard.draggables[i]);
+            Load.getDraggableName(Whiteboard.draggables[i]);
         }
         let name = popup.getElementsByClassName("popup-input")[0].value;
-        Save.updateCurrentLayout(name);    
-        localStorage.setItem("webdashboard:" + name, Save.getJSON());
+        Load.updateCurrentLayout(name);    
+        localStorage.setItem("webdashboard:" + name, Load.getJSON());
         Popup.closePopup(popup);
     },
 
     defaultSave: function (notify=true) {
         for (let i = 0; i < Whiteboard.draggables.length; i++) {
-            Save.getDraggableName(Whiteboard.draggables[i]);
+            Load.getDraggableName(Whiteboard.draggables[i]);
         }
-        localStorage.setItem(`webdashboard:${currentLayout}`, Save.getJSON());
+        localStorage.setItem(`webdashboard:${Load.currentLayout}`, Load.getJSON());
         if (notify) Notify.createNotice("Layout saved!", "positive", 3000);
     },
 
     selectJSON: function (event) {
         let popup = Popup.getPopupByOpener(event.target);
-        console.log(popup);
         let listContainer = document.getElementById("select-json-container");
         listContainer.innerHTML = "";
-        let layoutNames = Save.listLayoutNames();
+        let layoutNames = Load.listLayoutNames();
         Popup.populatePopupClickableList(document.getElementById("select-json-container"), layoutNames, (name) => name, (name, self) => {return () => {
-                Save.openJSONLayout(`webdashboard:${self.innerHTML}`); Popup.closePopup(popup);
+                Load.openJSONLayout(`webdashboard:${self.innerHTML}`); Popup.closePopup(popup);
             }
         });
     },
 
-    getJSON: function () {
+    getRawJSON: function () {
         let data = {};
         let draggableData = Whiteboard.draggables;
         data.draggableData = draggableData;
         let border = document.getElementById("whiteboard-border");
         data.border = {"width": border.style.width, "height": border.style.height};
-        data = JSON.stringify(data);
+        data.name = Load.currentLayout;
         return data;
     },
 
+    getJSON: function () {
+        return JSON.stringify(Load.getRawJSON());
+    },
+
     openJSONLayout: function (key) {
-        Save.updateCurrentLayout(key.replace(/webdashboard:/, ""));
-        Save.clearLayout(logChange=false);
+        Load.updateCurrentLayout(key.replace(/webdashboard:/, ""));
+        Load.clearLayout(logChange=false);
         try {
             let data = localStorage.getItem(key);
-            Save.openJSON(data);
+            Load.openJSON(data);
         } catch (err) {
             console.warn(err);
             Notify.createNotice("Could not open layout!", "negative", 5000);
@@ -113,7 +118,7 @@ var Save = {
     
     
     openJSON: function(json) {
-        Save.clearLayout(logChange=false);
+        Load.clearLayout(logChange=false);
         json = JSON.parse(json);
 
         let border = document.getElementById("whiteboard-border");
@@ -144,4 +149,4 @@ var Save = {
     }
 };
 
-window.Save = Save || {};
+window.Load = Load || {};

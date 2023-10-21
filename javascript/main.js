@@ -1,48 +1,7 @@
 var socket;
-var lastMessageTimestamp;
 var connecting = false;
 
-
-function openSocket(recursion) {
-    if (recursion == 0 || recursion == undefined) {
-        connecting = true;
-        recursion = 0;
-        Notify.createNotice("Attempting to connect to the RoboRio...", "neutral", 3000);
-    }
-    try {
-        socket = new WebSocket(websocketURL);
-    } catch {
-        console.error("Error creating websocket.")
-    }
-    socket.onopen = () => {
-        connecting = false;
-        Notify.createNotice("Connected to the RoboRio!", "positive", 8000);
-        document.getElementById("status-container").style.backgroundColor = "limegreen";
-        document.getElementById("status").innerHTML = "connected";
-    };
-    socket.onmessage = (event) => {Notify.createNotice("Received message from the RoboRio!", "positive", 8000); handleMessage(event.data)};
-    if (recursion < 1) {
-        socket.onerror = () => {Notify.createNotice("Could not connect to the RoboRio!", "negative", 8000); openSocket(recursion + 1); console.clear()};
-    } else {
-        socket.onerror = () => {openSocket(recursion + 1); console.clear()}
-    }
-}
-
-function disconnected() {
-    return Date.now() - lastMessageTimestamp > 15000;
-}
-
-function handleMessage(data) {
-    lastMessageTimestamp = Date.now();
-    if (!data == "pong") {
-        try {
-            data = JSON.parse(data);
-            Whiteboard.getDraggableById(data.id).handleDataFromRio(data);
-        } catch {
-            Notify.createNotice("Could not apply message from Rio", "negative", 3000);
-        }
-    }
-}
+var clientID;
 
 class Settings { //TODO: At some point this needs to get moved to its own namespace.  Saving functionality should also be added.
     constructor(websocketURL) {
@@ -54,8 +13,6 @@ var defaultSettings = new Settings("ws://10.69.36.2:5800");
 
 var currentSettings = defaultSettings;
 
-var websocketURL = "ws://127.0.0.1:5800"/*"ws://10.69.36.2:5800"*/;
-var currentLayout = "default";
 var isFullScreen = false;
 
 
@@ -70,24 +27,27 @@ function consoleOpen() {
 CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("enterfullscreen", inFullScreen, window));
 CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("exitfullscreen", () => {return !inFullScreen()}, window));
 CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("devtoolsopen", consoleOpen, window));
-CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("disconnected", disconnected, window));
 
 addEventListener("enterfullscreen", enterFullScreen);
 addEventListener("exitfullscreen", exitFullScreen);
 addEventListener("devtoolsopen", () => Notify.createNotice("Dev tools is open!", "neutral", 3000));
-addEventListener("disconnected", () => {
-    document.getElementById("status-container").style.backgroundColor = "red";
-    document.getElementById("status").innerHTML = "disconnected";
-    if (!connecting) openSocket();
-});
 
 function initialize() { //This is called when the body portion of the html document loads
+
+    addEventListener("beforeunload", function (event) {
+        if (Load.getJSON() !== localStorage.getItem(`webdashboard:${Load.currentLayout}`)) {
+            event.preventDefault();
+            return "Are you sure you want to leave the page?";
+        }
+    });
+
+    Socket.initializeSocket();
+
     let banner = document.getElementById("banner-container");
-    setInterval(() => {try {socket.send("ping")} catch {}}, 10000);
     setTimeout(() => {banner.style.top = "-100%"; setTimeout(() => banner.style.display = "none", 2000)}, 500);
     addMasterEventListeners();
 
-    Popup.generateSimpleInputPopup("save-layout-as", Save.saveJSON, new Popup.PopupInput("Enter the new layout name", "Save as"), false);    
+    Popup.generateSimpleInputPopup("Load-layout-as", Load.saveJSON, new Popup.PopupInput("Enter the new layout name", "Load as"), false);    
     Popup.generateSimpleInputPopup("layout-renamer", PopupTasks.renameLayout, new Popup.PopupInput("Enter the new layout name", "rename layout"), false);
     Popup.generateSimpleInputPopup("whiteboard-size-setter", PopupTasks.setWhiteBoardBorderSize, new Popup.PopupInput("750x500", "border size"), false);
     Popup.generateSimpleInputPopup("size-picker", PopupTasks.setDraggableSize, new Popup.PopupInput( "100x100", "draggable size"), false);
@@ -96,13 +56,12 @@ function initialize() { //This is called when the body portion of the html docum
     Popup.populatePopupClickableList(document.getElementById("select-type-container"), ["button", "toggle", "selector", "boolean telemetry", "text telemetry"], (iterable) => iterable, (iterable) => {return (event) => PopupTasks.setType(event, iterable)});
     Popup.populateVerticalInputs(document.getElementById("draggable-position-inputs"), new Popup.PopupInput("0", "x position", "x-pose-input"), new Popup.PopupInput("0", "y position", "y-pose-input"));
 
-    if (!Save.listLayoutNames().includes("default")) {
-        Save.defaultSave();
+    if (!Load.listLayoutNames().includes("default")) {
+        Load.defaultSave();
         console.warn("It looks like this is your first time using the Vault 6936 Web Dashboard in this browser.  Welcome!");
         setTimeout(() => Notify.createNotice("Welcome :)", "positive", 5000), 3000);
     }
 
-    openSocket();
     Popup.initializePopups();
 }
 
@@ -110,7 +69,7 @@ function addMasterEventListeners() {
     addEventListener("keydown", (event) => {
         if (event.key == "s" && (event.ctrlKey || event.metaKey)) { //meta key is for MacOS
               event.preventDefault();
-              Save.defaultSave();
+              Load.defaultSave();
               Notify.createNotice("Layout saved!", "positive", 3000);
         }
     });
@@ -118,7 +77,7 @@ function addMasterEventListeners() {
     oncontextmenu = (event) => generateContextMenu(event), false;
     onmousedown = (event) => removeMenu(event);
 
-    Save.openJSONLayout("webdashboard:default");
+    Load.openJSONLayout("webdashboard:default");
 }
 
 function getBorderWidth(element) {
@@ -180,7 +139,7 @@ function generateContextMenu(event) {
         if (Whiteboard.editingMode) {
             generateContextMenuButton(container, "remove", () => {if (Whiteboard.editingMode) {Whiteboard.logChange(); Whiteboard.draggables[event.target.getAttribute("index")].delete()}});
             generateContextMenuButton(container, "set id", () => Popup.openPopup("id-changer"));
-            if (draggable.type == "button") generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
+            if (draggable.type !== "toggle") generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
             generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
             generateContextMenuButton(container, "set position", () => Popup.openPopup("position-setter"));
             generateContextMenuButton(container, "set element type", () => Popup.openPopup("type-setter"));
@@ -192,8 +151,9 @@ function generateContextMenu(event) {
         Popup.selected = event.target;
         if (event.target.classList.contains("layout-selector-button")) {
             if (event.target.innerHTML !== "default") {
-                generateContextMenuButton(container, "delete", () => {Save.removeLayout(Popup.selected.innerHTML); Popup.selected.remove()});
+                generateContextMenuButton(container, "delete", () => {Load.removeLayout(Popup.selected.innerHTML); Popup.selected.remove()});
                 generateContextMenuButton(container, "rename", () => {Popup.openPopup("layout-renamer")});
+                generateContextMenuButton(container, "set as default", () => {PopupTasks.setAsDefault(event.target)});
             }
         }
     }
@@ -201,7 +161,7 @@ function generateContextMenu(event) {
 }
 
 function saveSettings() {
-    websocketURL = document.getElementById("websocketURL").value;
+    Socket.websocketURL = document.getElementById("Socket.websocketURL").value;
     Popup.clickCloseBtn();
 
 }

@@ -22,7 +22,7 @@ var Whiteboard = {
             this.id = null;
             this.setId(id);
 
-            this.status = false;    
+            this.state = false;    
     
             this.draggingDiv = false;
     
@@ -67,6 +67,7 @@ var Whiteboard = {
         }
 
         bindMethods() {
+            this.setToggleStatus = this.setState.bind(this);
             this.sendDataToRio = this.handleClick.bind(this);
             this.mouseDrag = this.mouseDrag.bind(this);
             this.stopDragging = this.stopDragging.bind(this);
@@ -79,16 +80,24 @@ var Whiteboard = {
             this.handleClick = this.handleClick.bind(this);
             this.equals = this.equals.bind(this);
         }
+
+        setState(state) {
+            this.state = state;
+            if (this.type == "toggle") {
+                if (state) {
+                    this.setColor("limegreen");
+                } else {
+                    this.setColor("red");
+                }      
+            } else if (this.type == "text telemetry") {
+                this.div.innerHTML = state;
+            }
+        }
     
-        handleClick() { //TODO: socket should be declared here
+        handleClick() {
             if (!Whiteboard.editingMode) {
                 if (this.type == "toggle") {
-                    this.status = !this.status;
-                    if (this.status) {
-                        this.setColor("limegreen");
-                    } else {
-                        this.setColor("red");
-                    }
+                    this.setState(!this.state);
                 }
                 if (this.type == "button" || this.type == "toggle") {
                     try {
@@ -98,9 +107,9 @@ var Whiteboard = {
                         if (this.type === "button") {
                             data["status"] = "click";
                         } else if (this.type === "toggle") {
-                            data["status"] = this.status.toString();
+                            data["status"] = this.state.toString();
                         };
-                        socket.send(data);
+                        Socket.websocket.send(data);
                     } catch {
                         console.warn("Unable to send data to RoboRio");
                     }
@@ -109,7 +118,7 @@ var Whiteboard = {
         }
 
         handleDataFromRio(dataObject) {
-            this.status = dataObject.status;
+            this.setState(dataObject.state);
             this.value = dataObject.value;
         }
 
@@ -150,19 +159,23 @@ var Whiteboard = {
         setType(type) {
             if (type == undefined || type == null) {
                 type = "button";
-            }
-            if (type == "toggle") {
+            } else if (type == "toggle") {
                 this.setColor("red");
+            } else if (this.type == "text telemetry") {
+                this.div.innerHTML = this.state;
             }
             this.type = type;
             this.setId();
+            if (type != "text telemetry") {
+                this.div.innerHTML = "";
+            }
         }
         setName(name) {
             this.name = name;
         }
         setId(id) {
             if (id == null || id == "undefined" || id == "") {
-                id = `${this.type}_${this.arrayIndex}`;
+                id = `${this.type.replace(" ", "_")}_${this.arrayIndex}`;
             }
             this.div.id = id;
             this.id = id;
@@ -228,6 +241,7 @@ var Whiteboard = {
 
 
     logChange: function () {
+        Socket.sendState();
         if (Whiteboard.States.stateIndex != Whiteboard.States.timeline.length) {
             Whiteboard.States.timeline = Whiteboard.States.timeline.slice(0, Whiteboard.States.stateIndex); // If the state index is not at the very end of the timeline, the user must have undone some tasks.  It doesn't make sense to keep those tasks as part of the timeline (they technically don't exist, because they have been undone), so they are deleted.
             Whiteboard.States.endState = null;
@@ -250,11 +264,11 @@ var Whiteboard = {
     WhiteboardState: class { //for the undo/redo functionality
 
         constructor() {
-            this.state = Save.getJSON();
+            this.state = Load.getJSON();
         }
 
         restore() {
-            Save.openJSON(this.state);
+            Load.openJSON(this.state);
         }
     },
 
