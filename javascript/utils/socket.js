@@ -1,6 +1,6 @@
 var Socket = {
     websocket: null,
-    websocketURL: "ws://127.0.0.1:5800",
+    websocketURL: "ws://10.69.36.2:5800",//"ws://127.0.0.1:5800",
     clientID : Date.now(),
     lastMessageTimestamp: 0,
     connecting: false,
@@ -18,7 +18,7 @@ var Socket = {
 
     sendState: function() {
         let data = {};
-        data.layout = Load.getRawJSON();
+        data.layout = Load.getLayoutJSON();
         data.clientID = Socket.clientID;
         data.messageType = "layout state";
         data = JSON.stringify(data);

@@ -17,7 +17,12 @@ var isFullScreen = false;
 
 
 function inFullScreen() {
-    return Math.abs(outerWidth-screen.width) < 5 && Math.abs(outerHeight - screen.height) < 5;    
+        const windowWidth = window.innerWidth * window.devicePixelRatio;
+        const windowHeight = window.innerHeight * window.devicePixelRatio;
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+        return ((windowWidth/screenWidth) >= 0.95) && ((windowHeight/screenHeight) >= 0.95);
+
 }
 
 function consoleOpen() {
@@ -35,7 +40,7 @@ addEventListener("devtoolsopen", () => Notify.createNotice("Dev tools is open!",
 function initialize() { //This is called when the body portion of the html document loads
 
     addEventListener("beforeunload", function (event) {
-        if (Load.getJSON() !== localStorage.getItem(`webdashboard:${Load.currentLayout}`)) {
+        if (Load.getLayoutJSONString() !== localStorage.getItem(`webdashboard:${Load.currentLayout}`)) {
             event.preventDefault();
             return "Are you sure you want to leave the page?";
         }
@@ -47,14 +52,16 @@ function initialize() { //This is called when the body portion of the html docum
     setTimeout(() => {banner.style.top = "-100%"; setTimeout(() => banner.style.display = "none", 2000)}, 500);
     addMasterEventListeners();
 
-    Popup.generateSimpleInputPopup("Load-layout-as", Load.saveJSON, new Popup.PopupInput("Enter the new layout name", "Load as"), false);    
-    Popup.generateSimpleInputPopup("layout-renamer", PopupTasks.renameLayout, new Popup.PopupInput("Enter the new layout name", "rename layout"), false);
-    Popup.generateSimpleInputPopup("whiteboard-size-setter", PopupTasks.setWhiteBoardBorderSize, new Popup.PopupInput("750x500", "border size"), false);
-    Popup.generateSimpleInputPopup("size-picker", PopupTasks.setDraggableSize, new Popup.PopupInput( "100x100", "draggable size"), false);
-    Popup.generateSimpleInputPopup("color-picker", PopupTasks.changeColor, new Popup.PopupInput("#ffffff", "draggable color"), false);
-    Popup.generateSimpleInputPopup("id-changer", PopupTasks.changeID, new Popup.PopupInput("Enter draggable id", "draggable id"), false);
+    Popup.generateSimpleInputPopup("Load-layout-as", Load.saveJSON, new Popup.PopupInput("Enter the new layout name", "Load as"));    
+    Popup.generateSimpleInputPopup("layout-renamer", PopupTasks.renameLayout, new Popup.PopupInput("Enter the new layout name", "rename layout"));
+    Popup.generateSimpleInputPopup("whiteboard-size-setter", PopupTasks.setWhiteBoardBorderSize, new Popup.PopupInput("750x500", "border size"));
+    Popup.generateSimpleInputPopup("size-picker", PopupTasks.setDraggableSize, new Popup.PopupInput( "100x100", "draggable size"));
+    Popup.generateSimpleInputPopup("color-picker", PopupTasks.changeColor, new Popup.PopupInput("#ffffff", "draggable color"));
+    Popup.generateSimpleInputPopup("id-changer", PopupTasks.changeID, new Popup.PopupInput("Enter draggable id", "draggable id"));
     Popup.populatePopupClickableList(document.getElementById("select-type-container"), ["button", "toggle", "selector", "boolean telemetry", "text telemetry"], (iterable) => iterable, (iterable) => {return (event) => PopupTasks.setType(event, iterable)});
+    
     Popup.populateVerticalInputs(document.getElementById("draggable-position-inputs"), new Popup.PopupInput("0", "x position", "x-pose-input"), new Popup.PopupInput("0", "y position", "y-pose-input"));
+    Popup.populateVerticalInputs(document.getElementById("import-json-info"), new Popup.PopupInput("import", "layout name", "import-layout-name"), new Popup.PopupInput("", "layout JSON", "import-layout-json"));
 
     if (!Load.listLayoutNames().includes("default")) {
         Load.defaultSave();
@@ -143,20 +150,18 @@ function generateContextMenu(event) {
             generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
             generateContextMenuButton(container, "set position", () => Popup.openPopup("position-setter"));
             generateContextMenuButton(container, "set element type", () => Popup.openPopup("type-setter"));
-            generateContextMenuButton(container, "duplicate", () => Whiteboard.duplicate(Whiteboard.draggables[Whiteboard.getDraggableIndex(Whiteboard.currentDraggableDiv)]));
+            generateContextMenuButton(container, "duplicate", () => Whiteboard.duplicate(Whiteboard.draggables[Whiteboard.getDraggableIndex(Whiteboard.currentDraggable.div)]));
         }    
     } else if (event.target.id == "whiteboard-border") {
         generateContextMenuButton(container, "set whiteboard size", () => {Popup.openPopup("whiteboard-size-setter")});
     } else if (event.target.classList.contains("selectable")) {
-        Popup.selected = event.target;
         if (event.target.classList.contains("layout-selector-button")) {
             if (event.target.innerHTML !== "default") {
-                generateContextMenuButton(container, "delete", () => {Load.removeLayout(Popup.selected.innerHTML); Popup.selected.remove()});
+                generateContextMenuButton(container, "delete", () => {Load.removeLayout(event.target.innerHTML); event.target.remove()});
                 generateContextMenuButton(container, "rename", () => {Popup.openPopup("layout-renamer")});
-                generateContextMenuButton(container, "set as default", () => {PopupTasks.setAsDefault(event.target)});
+                generateContextMenuButton(container, "set as default", () => {Load.setAsDefault(event.target.innerHTML)});
             }
-            generateContextMenuButton(container, "export json", () => {});
-            generateContextMenuButton(container, "import json", () => {});
+            generateContextMenuButton(container, "export json", () => {Load.exportJSON(`webdashboard:${event.target.innerHTML}`)});
         }
     }
     document.body.appendChild(container);

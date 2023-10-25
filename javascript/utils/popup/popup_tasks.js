@@ -84,21 +84,6 @@ var PopupTasks = {
         Popup.closePopup(popup);
     },
 
-    setAsDefault: function (anchor) {
-        try {
-            let data = localStorage.getItem(`webdashboard:${anchor.innerHTML}`);
-            localStorage.setItem("webdashboard:default", data);
-            Whiteboard.logChange();
-            if (Load.currentLayout == "default") {
-                Load.openJSONLayout("webdashboard:default");
-            }
-            Notify.createNotice("Set the current layout as default", "positive", 3000);
-        } catch (err) {
-            console.log(err);
-            Notify.createNotice("Could not set as default!", "negative", 3000);
-        }
-    },
-
 }
 
 window.PopupTasks = PopupTasks || {};

@@ -157,12 +157,14 @@ var Whiteboard = {
             this.setPosition(this.position);
         }
         setType(type) {
+            this.div.style.overflow = "hidden";
             if (type == undefined || type == null) {
                 type = "button";
             } else if (type == "toggle") {
                 this.setColor("red");
             } else if (this.type == "text telemetry") {
                 this.div.innerHTML = this.state;
+                this.div.style.overflow = "scroll";
             }
             this.type = type;
             if (type != "text telemetry") {
@@ -263,7 +265,7 @@ var Whiteboard = {
     WhiteboardState: class { //for the undo/redo functionality
 
         constructor() {
-            this.state = Load.getJSON();
+            this.state = Load.getLayoutJSONString();
         }
 
         restore() {
