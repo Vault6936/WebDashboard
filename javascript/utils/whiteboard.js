@@ -1,6 +1,6 @@
 var Whiteboard = {
     WhiteboardDraggable: class {
-        constructor(name, position, size, color, type, id) {
+        constructor(name, position, size, color, type, id, state) {
 
             this.bindMethods();
 
@@ -22,7 +22,7 @@ var Whiteboard = {
             this.id = null;
             this.setId(id);
 
-            this.state = false;    
+            this.state = state ?? false;
     
             this.draggingDiv = false;
     
@@ -215,6 +215,17 @@ var Whiteboard = {
             return draggable.name === this.name && this.position.equals(draggable.position) 
             && this.size.equals(draggable.size) && draggable.color == this.color && draggable.type == this.type && draggable.id == this.id;
         }
+        copy() {
+            let object = {};
+            object.name = this.name;
+            object.position = this.position;
+            object.size = this.size;
+            object.color = this.color;
+            object.type = this.type;
+            object.id = this.id;
+            object.state = this.state;
+            return object;
+        }
     },
 
     getDraggableIndex: function (draggable) {
@@ -223,7 +234,7 @@ var Whiteboard = {
 
     addDefaultDraggable: function () {
         Whiteboard.logChange();
-        if (Whiteboard.editingMode) Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable("", new Positioning.Vector2d(100, 100), new Positioning.Vector2d(100, 100), "black", "button", null));
+        if (Whiteboard.editingMode) Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable("", new Positioning.Vector2d(100, 100), new Positioning.Vector2d(100, 100), "#0098cb", "button", null));
     },
 
     duplicate: function (draggable, keepPosition=false) {
@@ -243,11 +254,12 @@ var Whiteboard = {
 
     logChange: function () {
         Socket.sendState();
+        let state = new Whiteboard.WhiteboardState();
         if (Whiteboard.States.stateIndex != Whiteboard.States.timeline.length) {
             Whiteboard.States.timeline = Whiteboard.States.timeline.slice(0, Whiteboard.States.stateIndex); // If the state index is not at the very end of the timeline, the user must have undone some tasks.  It doesn't make sense to keep those tasks as part of the timeline (they technically don't exist, because they have been undone), so they are deleted.
             Whiteboard.States.endState = null;
         }
-        Whiteboard.States.timeline.push((new Whiteboard.WhiteboardState()));
+        Whiteboard.States.timeline.push(state);
         Whiteboard.States.stateIndex += 1;
     },
 
@@ -282,12 +294,19 @@ var Whiteboard = {
         return null;
     },
 
+    handleStateEquality: function () {
+
+    },
+
     undoChange: function () {
         if (Whiteboard.States.timeline.length == 0) return;
         if (Whiteboard.States.stateIndex == Whiteboard.States.timeline.length) {
             Whiteboard.States.endState = new Whiteboard.WhiteboardState();
         }
         if (Whiteboard.States.stateIndex > 0) {
+            Whiteboard.States.stateIndex -= 1;
+        }
+        if (Whiteboard.States.timeline[Whiteboard.States.stateIndex].state == Load.getLayoutJSONString() && Whiteboard.States.stateIndex > 0) {
             Whiteboard.States.stateIndex -= 1;
         }
         Whiteboard.States.timeline[Whiteboard.States.stateIndex].restore();
@@ -297,13 +316,36 @@ var Whiteboard = {
         if (Whiteboard.States.timeline.length > Whiteboard.States.stateIndex) {
             Whiteboard.States.stateIndex += 1;
         }
+        try {
+            if (Whiteboard.States.timeline[Whiteboard.States.stateIndex].state == Load.getLayoutJSONString() && Whiteboard.States.timeline.length > Whiteboard.States.stateIndex) {
+                Whiteboard.States.stateIndex += 1;
+            }
+        } catch {} 
         if (Whiteboard.States.stateIndex == Whiteboard.States.timeline.length) {
             if (Whiteboard.States.endState != null) Whiteboard.States.endState.restore();
         } else {
             Whiteboard.States.timeline[Whiteboard.States.stateIndex].restore();
-        }
+        }        
     },
 
+    toggleEditingMode: function () {
+        var editingToggle = document.getElementById("editingToggle");
+        var labels = document.getElementsByClassName("whiteboard-label");
+        var editModeOnlyBtns = document.getElementsByClassName("edit-mode-only");
+        var border = document.getElementById("whiteboard-border");
+        if (Whiteboard.editingMode) {
+            border.style.display = "none";
+            editingToggle.innerHTML = "turn on editing mode";
+            Array.from(labels).forEach((label) => label.readOnly = true);
+            Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "none");
+        } else {
+            border.style.display = "block";
+            editingToggle.innerHTML = "turn off editing mode";
+            Array.from(labels).forEach((label) => label.readOnly = false);
+            Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "block");
+        }
+        Whiteboard.editingMode = !Whiteboard.editingMode;
+    },
 
     draggables: [],
     dragOffset: null,

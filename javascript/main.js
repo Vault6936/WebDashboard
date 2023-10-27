@@ -22,7 +22,6 @@ function inFullScreen() {
         const screenWidth = window.screen.width;
         const screenHeight = window.screen.height;
         return ((windowWidth/screenWidth) >= 0.95) && ((windowHeight/screenHeight) >= 0.95);
-
 }
 
 function consoleOpen() {
@@ -45,6 +44,7 @@ function initialize() { //This is called when the body portion of the html docum
             return "Are you sure you want to leave the page?";
         }
     });
+    window.onbeforeunload = () => {return "Are you sure you want to leave the page?"};
 
     Socket.initializeSocket();
 
@@ -89,26 +89,6 @@ function addMasterEventListeners() {
 
 function getBorderWidth(element) {
     return element.offsetWidth - element.clientWidth;
-}
-
-function toggleEditingMode() {
-    var editingToggle = document.getElementById("editingToggle");
-    var labels = document.getElementsByClassName("whiteboard-label");
-    var border = document.getElementById("whiteboard-border");
-    if (Whiteboard.editingMode) {
-        border.style.display = "none";
-        editingToggle.innerHTML = "turn on editing mode";
-        for (var i = 0; i < labels.length; i++) {
-            labels[i].readOnly = true;
-        }
-    } else {
-        border.style.display = "block";
-        editingToggle.innerHTML = "turn off editing mode";
-        for (var i = 0; i < labels.length; i++) {
-            labels[i].readOnly = false;
-        }
-    }
-    Whiteboard.editingMode = !Whiteboard.editingMode;
 }
 
 function removeMenu(event) {
@@ -157,9 +137,9 @@ function generateContextMenu(event) {
     } else if (event.target.classList.contains("selectable")) {
         if (event.target.classList.contains("layout-selector-button")) {
             if (event.target.innerHTML !== "default") {
-                generateContextMenuButton(container, "delete", () => {Load.removeLayout(event.target.innerHTML); event.target.remove()});
+                generateContextMenuButton(container, "delete", () => {Load.targetLayout = event.target.innerHTML; Popup.openPopup("remove-layout")});
                 generateContextMenuButton(container, "rename", () => {Popup.openPopup("layout-renamer")});
-                generateContextMenuButton(container, "set as default", () => {Load.setAsDefault(event.target.innerHTML)});
+                generateContextMenuButton(container, "set as default", () => {Load.setAsDefault(`webdashboard:${event.target.innerHTML}`)});
             }
             generateContextMenuButton(container, "export json", () => {Load.exportJSON(`webdashboard:${event.target.innerHTML}`)});
         }
@@ -184,7 +164,7 @@ function toggleFullScreen() {
 }
 
 function enterFullScreen() {
-    if (Whiteboard.editingMode) toggleEditingMode();
+    if (Whiteboard.editingMode) Whiteboard.toggleEditingMode();
     isFullScreen = true;
     document.getElementById("menu").style.display = "none";
     Notify.createNotice("Press f11 to exit full screen", "neutral", 4000);

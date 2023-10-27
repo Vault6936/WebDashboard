@@ -13,19 +13,26 @@ var Load = {
 
     removeLayout: function (key) {
         try {
-            if (key !== "default") {
-                localStorage.removeItem("webdashboard:" + key);
+            if (key !== "webdashboard:default") {
+                localStorage.removeItem(key);
             }
         } catch {
             Notify.createNotice("Could not remove layout!  Try reloading the page.", "negative");
         }
     },
-    
+
+    safeDelete: function (event, key) {
+        let popup = Popup.getPopupFromChild(event.target);
+        Load.removeLayout(key);
+        let buttons = Array.from(document.getElementById("open-layout").getElementsByClassName("layout-selector-button"));
+        buttons.forEach((button) => {if (button.innerHTML === key.replace(/webdashboard:/, "")) {button.remove()}});
+        Popup.closePopup(popup);
+    },    
     
     removeAllLayouts: function (event) {
         let layoutNames = Load.listLayoutNames();
         for (let i = 0; i < layoutNames.length; i++) {
-            Load.removeLayout(layoutNames[i]);
+            Load.removeLayout(`webdashboard:${layoutNames[i]}`);
         }
         Load.openJSONLayout("webdashboard:default");
         Load.clearLayout();
@@ -79,7 +86,7 @@ var Load = {
         if (notify) Notify.createNotice("Layout saved!", "positive", 3000);
     },
 
-    selectJSON: function (event) {
+    displayLayouts: function (event) {
         let popup = Popup.getPopupByOpener(event.target);
         let listContainer = document.getElementById("select-json-container");
         listContainer.innerHTML = "";
@@ -92,7 +99,8 @@ var Load = {
 
     getLayoutJSON: function () {
         let data = {};
-        let draggableData = Whiteboard.draggables;
+        let draggableData = [];
+        Whiteboard.draggables.forEach((draggable) => draggableData.push(draggable.copy()));
         data.draggableData = draggableData;
         let border = document.getElementById("whiteboard-border");
         data.border = {"width": border.style.width, "height": border.style.height};
@@ -105,6 +113,12 @@ var Load = {
     },
 
     openJSONLayout: function (key) {
+        let notDefaultBtns = Array.from(document.getElementsByClassName("not-default"));
+        if (key === "webdashboard:default") {
+            notDefaultBtns.forEach((button) => button.style.display = "none");
+        } else {
+            notDefaultBtns.forEach((button) => button.style.display = "block");
+        }
         Load.updateCurrentLayout(key.replace(/webdashboard:/, ""));
         Load.clearLayout(logChange=false);
         try {
@@ -156,20 +170,25 @@ var Load = {
         Load.defaultSave(false);
         let popup = Popup.getPopupFromChild(event.target);
         let name = document.getElementById("import-layout-name").getElementsByClassName("popup-input")[0].value;
-        if (name === "default" || name === "") {
+        if (name === "") {
             Notify.createNotice("Illegal layout name", "negative", 3000);
             return;
         }
         let json = document.getElementById("import-layout-json").getElementsByClassName("popup-input")[0].value;
         localStorage.setItem(`webdashboard:${name}`, json);
-        Load.openJSON(json);
+        try {
+            Load.openJSON(json);
+            Load.updateCurrentLayout(name);
+        } catch {
+            Notify.createNotice("Could not open layout - Invalid JSON", "negative", 3000);
+        }
         Popup.closePopup(popup);
     },
 
     
     setAsDefault: function (key) {
         try {
-            let data = localStorage.getItem(`webdashboard:${key}`);
+            let data = localStorage.getItem(key);
             localStorage.setItem("webdashboard:default", data);
             Whiteboard.logChange();
             if (Load.currentLayout == "default") {
@@ -191,7 +210,9 @@ var Load = {
         let border = document.getElementById("whiteboard-border");
         border.style.removeProperty("width");
         border.style.removeProperty("height");
-    }
+    },
+
+    targetLayout: "",
 };
 
 window.Load = Load || {};

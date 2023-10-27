@@ -76,7 +76,6 @@ body {
 }
 
 .dropdown:hover .dropdown-option {
-    display: block;
     opacity: 100%;
     font-size: 15px;
     height: 25px;
@@ -92,6 +91,7 @@ body {
 }
 
 .dropdown-option {
+    display: block;
     opacity: 0%;
     transition: all 0.2s ease-in;
     font-size: 8px;
@@ -128,7 +128,6 @@ body {
     left: 50%;
     width: 100px;
     height: 100px;
-    background-color: #0098cb;
     display: inline-block;
     padding: 5px;
     box-sizing: border-box;
@@ -230,6 +229,10 @@ body {
     background-color: #0098cb;
     color: white;
     cursor: pointer;
+}
+
+.edit-mode-only {
+    display: none;
 }
 
 .apply-container {

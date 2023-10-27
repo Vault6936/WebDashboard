@@ -29,20 +29,22 @@
                     <a class="dropdown-option">customize layout</a>
                     <a class="dropdown-option" onclick="Load.defaultSave()">save layout</a>
                     <a class="dropdown-option" popup="Load-layout-as" title="Note that since this program uses local storage, data will not carry over to a different browser.  Your settings will not be saved in Firefox if you created them in Chrome!">save layout as</a>
-                    <a class="dropdown-option" onclick="Load.selectJSON(event)" popup="open-layout">open layout</a>
+                    <a class="dropdown-option" onclick="Load.displayLayouts(event)" popup="open-layout">open layout</a>
                     <a class="dropdown-option" onclick="Load.exportJSON(`webdashboard:${Load.currentLayout}`)">export json</a>
                     <a class="dropdown-option" popup="json-importer">import json</a>
+                    <a class="dropdown-option not-default" onclick="Load.setAsDefault(`webdashboard:${Load.currentLayout}`)">set as default</a>
+                    <a class="dropdown-option not-default" popup="remove-layout" onclick="Load.targetLayout = Load.currentLayout">delete layout</a>
                     <a class="dropdown-option" popup="clear-storage">clear storage</a>
                 </div>
             </div>
             <div class="dropdown">
                 <button class="dropdown-button">Edit</button>
                 <div class="dropdown-container">
-                    <a class="dropdown-option" onclick="Whiteboard.undoChange()">Undo</a>
-                    <a class="dropdown-option" onclick="Whiteboard.redoChange()">Redo</a>
-                    <a class="dropdown-option" onclick="Load.clearLayout()">clear layout</a>
-                    <a class="dropdown-option" id="editingToggle" onclick="toggleEditingMode()">turn on editing mode</a>
-                    <a class="dropdown-option" onclick="Whiteboard.addDefaultDraggable()">add element</a>
+                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.undoChange()">Undo</a>
+                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.redoChange()">Redo</a>
+                    <a class="dropdown-option edit-mode-only" onclick="Load.clearLayout()">clear layout</a>
+                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.addDefaultDraggable()">add element</a>
+                    <a class="dropdown-option" id="editingToggle" onclick="Whiteboard.toggleEditingMode()">turn on editing mode</a>
                 </div>
             </div>
             <div class="dropdown">
@@ -75,6 +77,12 @@
             <p class="prompt">Are you sure you want to delete all layouts?  This action cannot be undone.</p>
         </div>
         <button class="apply" onclick="Load.removeAllLayouts(event)">Do it!</button>
+    </div>
+    <div id="remove-layout" class="popup" style="width: 350px; height: 200px" targetLayout="">
+        <div class="prompt-container">
+            <p class="prompt">Are you sure you want to delete this layout?  This action cannot be undone.</p>
+        </div>
+        <button class="apply" onclick="Load.safeDelete(event, `webdashboard:${Load.targetLayout}`)">Do it!</button>
     </div>
     <div id="type-setter" class="popup" style="width: 300px; height: 200px">
         <div class="list-container" id="select-type-container"></div>

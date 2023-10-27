@@ -36,7 +36,6 @@ var Popup = {
         for (let i = 0; i < popup.children.length; i++) {
             popup.children[i].style.opacity = 0;
         }
-
     },
 
     setPopupSize: function (element, width, height) {

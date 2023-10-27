@@ -1,6 +1,6 @@
 package com.vault6936;
 
-public class JSONStatusStr {
+public abstract class JSONStatusStr {
 
     private String id;
     private String status;
