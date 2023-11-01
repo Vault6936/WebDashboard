@@ -158,12 +158,12 @@ var Load = {
         } else {
             data = localStorage.getItem(key);
         }
-        navigator.clipboard.writeText(data).then(() => {
+        try {
+            navigator.clipboard.writeText(data);
             Notify.createNotice("Copied layout JSON to clipboard", "positive", 3000);
-            })
-            .catch(() => {
+        } catch {
             Notify.createNotice("Could not export layout JSON", "negative", 3000);
-            });
+        }
     },
 
     importJSON: function (event) {
