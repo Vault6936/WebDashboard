@@ -1,20 +1,43 @@
 var Whiteboard = {
+
     WhiteboardDraggable: class {
-        constructor(name, position, size, color, type, id, state) {
 
+        static Types =  {
+            BUTTON: "button",
+            TOGGLE: "toggle",
+            SELECTOR: "selector",
+            BOOLEAN_TELEMETRY: "boolean telemetry",
+            TEXT_TELEMETRY: "text telemetry",
+            CAMERA_STREAM: "camera steam",
+        };
+
+        constructor(name, position, size, color, type, id, state, otherData) {
             this.bindMethods();
-
             this.whiteboard = document.getElementById("whiteboard");
 
+            if (otherData != undefined) this.otherData = otherData; else this.otherData = {};
+
             this.div = document.createElement("div");
+            this.selectorContainer = document.createElement("div");
+            this.selectorContainer.classList.add("draggable-selectable-container");
+            this.div.appendChild(this.selectorContainer);
+            this.textContainer = document.createElement("div");
+            this.div.appendChild(this.textContainer);
     
             this.name = name;
-            this.size = size;
             this.position = position;
-            this.color = color;
             this.size = size;
+            this.color = color;
             this.type = null;
+            try {
+                this.otherData.selectableNames = otherData.selectableNames;
+            } catch {
+                this.otherData.selectableNames = [];
+            };
+
             this.setType(type);
+            this.state = state == undefined ? false : state;
+
     
             this.arrayIndex = 0;
             this.updateIndex(Whiteboard.draggables.length);
@@ -22,13 +45,12 @@ var Whiteboard = {
             this.id = null;
             this.setId(id);
 
-            this.state = state ?? false;
     
             this.draggingDiv = false;
     
             this.container = document.createElement("span");
             this.label = document.createElement("input");
-            if (!Whiteboard.editingMode) this.label.readOnly = true;            
+            if (!Whiteboard.editingMode) this.label.readOnly = true;   
             this.div.className = "whiteboard-draggable";
             this.div.background = this.color;
     
@@ -50,7 +72,7 @@ var Whiteboard = {
             [document, window, this.div].forEach(((thing) => {thing.onpointerup = this.stopDragging; thing.onmouseup = this.stopDragging}).bind(this));
     
             this.div.onmouseover = (event) => {
-                if (Whiteboard.editingMode) {event.target.style.cursor = "move"} else if (this.type === "button") {event.target.style.cursor = "pointer"; event.target.style.background = "#ebebe0"} else {event.target.style.cursor = "auto"}
+                if (Whiteboard.editingMode) {event.target.style.cursor = "move"} else if (this.type === "button") {event.target.style.cursor = "pointer"; event.target.style.background = "#0098cb"} else {event.target.style.cursor = "auto"}
             }
             this.div.onmouseleave = (event) => {event.target.classList.remove("whiteboard-button"), event.target.style.background = this.color}
             this.div.dispatchEvent(new Event("mouseleave")); //If this event isn't dispatched, the program will glitch and cause the element to think the mouse is over it
@@ -79,18 +101,30 @@ var Whiteboard = {
             this.setId = this.setId.bind(this);
             this.handleClick = this.handleClick.bind(this);
             this.equals = this.equals.bind(this);
+            this.generateSelectorHTML = this.generateSelectorHTML.bind(this);
+        }
+
+        generateSelectorHTML(selectableNames) {
+            if (selectableNames == undefined) return;
+            this.otherData.selectableNames = selectableNames;
+            this.selectorContainer.innerHTML = "";
+            let group = new Popup.SelectableGroup();
+            for (let i = 0; i < selectableNames.length; i++) {
+                group.add(new Popup.Selectable(selectableNames[i], (() => {this.state = selectableNames[i]}).bind(this), "draggable-unselect", "draggable-select", true));
+            }
+            group.generateHTML(this.selectorContainer);
         }
 
         setState(state) {
             this.state = state;
-            if (this.type == "toggle") {
+            if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                 if (state) {
                     this.setColor("limegreen");
                 } else {
                     this.setColor("red");
                 }      
-            } else if (this.type == "text telemetry") {
-                this.div.innerHTML = state;
+            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
+                this.textContainer.innerHTML = state;
             }
         }
     
@@ -99,14 +133,14 @@ var Whiteboard = {
                 if (this.type == "toggle") {
                     this.setState(!this.state);
                 }
-                if (this.type == "button" || this.type == "toggle") {
+                if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON || this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                     try {
                         let data = {};
                         data["id"] = this.id;
                         data["type"] = this.type;
-                        if (this.type === "button") {
+                        if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
                             data["status"] = "click";
-                        } else if (this.type === "toggle") {
+                        } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                             data["status"] = this.state.toString();
                         };
                         Socket.websocket.send(data);
@@ -158,17 +192,20 @@ var Whiteboard = {
         }
         setType(type) {
             this.div.style.overflow = "hidden";
+            this.selectorContainer.innerHTML = "";
             if (type == undefined || type == null) {
                 type = "button";
-            } else if (type == "toggle") {
+            } else if (type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                 this.setColor("red");
-            } else if (this.type == "text telemetry") {
+            } else if (type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
+                this.generateSelectorHTML(this.otherData.selectableNames);
+            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
                 this.div.innerHTML = this.state;
                 this.div.style.overflow = "scroll";
             }
             this.type = type;
-            if (type != "text telemetry") {
-                this.div.innerHTML = "";
+            if (type !== Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
+                this.textContainer.innerHTML = "";
             }
         }
         setName(name) {
@@ -180,7 +217,6 @@ var Whiteboard = {
             }
             this.div.id = id;
             this.id = id;
-            this.div.title = (`ID: ${id}`);
         }
         setColor(color) {
             this.color = color;
@@ -224,6 +260,7 @@ var Whiteboard = {
             object.type = this.type;
             object.id = this.id;
             object.state = this.state;
+            object.otherData = this.otherData;
             return object;
         }
     },
@@ -299,6 +336,9 @@ var Whiteboard = {
     },
 
     undoChange: function () {
+        if (!Whiteboard.editingMode) {
+            return;
+        }
         if (Whiteboard.States.timeline.length == 0) return;
         if (Whiteboard.States.stateIndex == Whiteboard.States.timeline.length) {
             Whiteboard.States.endState = new Whiteboard.WhiteboardState();
@@ -313,6 +353,9 @@ var Whiteboard = {
     },
 
     redoChange: function () {
+        if (!Whiteboard.editingMode) {
+            return;
+        }
         if (Whiteboard.States.timeline.length > Whiteboard.States.stateIndex) {
             Whiteboard.States.stateIndex += 1;
         }
@@ -338,11 +381,13 @@ var Whiteboard = {
             editingToggle.innerHTML = "turn on editing mode";
             Array.from(labels).forEach((label) => label.readOnly = true);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "none");
+            this.draggables.forEach((draggable) => {draggable.div.title = ""});
         } else {
             border.style.display = "block";
             editingToggle.innerHTML = "turn off editing mode";
             Array.from(labels).forEach((label) => label.readOnly = false);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "block");
+            this.draggables.forEach((draggable) => {draggable.div.title = `ID: ${draggable.id}`});
         }
         Whiteboard.editingMode = !Whiteboard.editingMode;
     },

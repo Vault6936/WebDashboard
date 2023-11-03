@@ -19,6 +19,9 @@ var Popup = {
         popup.setAttribute("z-index", "1");
         popupBackground.style.display = "block";
         popupBackground.setAttribute("z-index", "0");
+
+        let onopen = document.getElementsByClassName("popup-onopen")[0];
+        if (onopen != undefined) onopen.click(); 
     },
 
     closePopupByCloser: function (target) {
@@ -70,13 +73,55 @@ var Popup = {
         return div;    
     },
 
-    populatePopupClickableList: function (container, iterables, getName, getOnclick) {
+    populatePopupClickableList: function (container, iterables, getName, getOnclick, unselectedStyle, selectedStyle, isSelectable=false) {
+        let group = new Popup.SelectableGroup();
         for (let i = 0; i < iterables.length; i++) {
-            let a = document.createElement("a");
-            a.setAttribute("class", "default-text carousel-item selectable layout-selector-button");
-            a.innerHTML = getName(iterables[i]);
-            a.onclick = getOnclick(iterables[i], a);
-            container.appendChild(a);
+            let selectable = new Popup.Selectable(getName(iterables[i], i), getOnclick(iterables[i], i), unselectedStyle, selectedStyle, isSelectable);
+            group.add(selectable);
+        }
+        group.generateHTML(container);
+    },
+
+    Selectable: class {
+        constructor(name, onclick, unselectedStyle, selectedStyle, isSelectable) {
+            this.group = null;
+            this.name = name;
+            this.unselectedStyle = (unselectedStyle == undefined ?  "default-selectable" : unselectedStyle);
+            this.selectedStyle = (selectedStyle == undefined ?  "default-selectable-selected" : selectedStyle);
+            this.anchor = document.createElement("a");  
+            this.anchor.setAttribute("class", this.unselectedStyle);
+            this.anchor.classList.add("selectable");
+            this.anchor.innerHTML = name;
+            this.anchor.onclick = function () {
+                if (isSelectable) {
+                    this.group.select(this);
+                }
+                try {
+                    onclick();
+                } catch (e) {
+                    console.error(e);
+                }
+            }.bind(this);
+            this.isSelectable = isSelectable;
+        }
+
+    },
+
+    SelectableGroup: class {
+        selected = null;
+        selectables = [];
+        select(selectable) {
+            for (let i = 0; i < this.selectables.length; i++) {
+                this.selectables[i].anchor.classList.remove(this.selectables[i].selectedStyle);
+            }
+            this.selected = selectable;
+            selectable.anchor.classList.add(selectable.selectedStyle);
+        }
+        add(...selectableItems) {
+            selectableItems.forEach((selectable) => {this.selectables.push(selectable); selectable.group = this;});
+        }
+        generateHTML(parent) {            
+            this.selectables.forEach((selectable) => parent.appendChild(selectable.anchor));        
         }
     },
 
@@ -153,6 +198,13 @@ var Popup = {
         }
     },
 
+    getInputValue: function (wrapperId) {
+        return document.getElementById(wrapperId).getElementsByClassName("popup-input")[0].value;
+    },
+
+    setInputValue: function (wrapperId, value) {
+        document.getElementById(wrapperId).getElementsByClassName("popup-input")[0].value = value;
+    },
 };
 
 Popup = Popup || {};

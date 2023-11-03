@@ -325,6 +325,7 @@ body {
     margin: auto;
     width: 250px;
     height: min-content;
+    max-height: 150px;
 }
 
 .list-container {
@@ -337,22 +338,57 @@ body {
     background-color: white;
 }
 
-.carousel-item {
-    background-color: white;
-    text-align: center;
+.selectable {
+    user-select: none;
+    cursor: pointer;
 }
 
-.selectable {
+.default-selectable {
+    height: 20px;
+    font-family: Roboto;
+    font-size: 15px;
+    background-color: white;
+    color: #0098cb;
+    text-align: center;
     cursor: pointer;
     user-select: none; /* I love the irony :) */
-    height: 20px;
     overflow: ellipsis;
 }
 
-.selectable:hover {
+.default-selectable:hover {
     background-color: #0098cb;
     color: white;
     transition: all 0.2s ease-in;
+}
+
+.default-selectable-selected {
+    background-color: #0098cb;
+    color: white;
+}
+
+.draggable-unselect {
+    background-color: white;
+    color: #0098cb;
+    text-align: center;
+}
+
+.draggable-select {
+    background-color: #0098cb;
+    color: white;
+}
+
+.draggable-selectable-container {
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: repeat(auto-fill, min-content);
+    max-height: calc(100% - 50px);
+    overflow-x: hidden;
+    overflow-y: scroll;
+    background-color: white;
+}
+
+.layout-selectable {
+    height: 20px;
 }
 
 .notice-container {
@@ -471,4 +507,16 @@ body {
     font-size: 15px;
     color: white;
     user-select: none;
+}
+
+#draggable-selectable-field {
+    width: 200px;
+    height: 150px;
+    background-color: white;
+    border-radius: 7px;
+    border: 5px solid #0098cb;
+    font-family: Roboto;
+    font-size: 15px;
+    resize: none;
+    padding: 5px;
 }

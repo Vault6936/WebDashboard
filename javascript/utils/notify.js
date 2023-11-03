@@ -50,9 +50,7 @@ var Notify = {
                 }, this.duration)
             }
             )}).then(() => this.container.remove());
-        }
-    
-    
+        }    
     },
 
     createNotice: function (message, type, duration) {

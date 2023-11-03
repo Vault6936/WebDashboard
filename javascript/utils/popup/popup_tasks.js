@@ -35,10 +35,25 @@ var PopupTasks = {
         Popup.closePopup(popup);
     },
 
-    setType: function (event, type) {
+    setType: function (type) {
         Whiteboard.logChange();
         Whiteboard.currentDraggable.setType(type);
-        Popup.closePopup(Popup.getPopupFromChild(event.target));
+        Popup.closePopup(document.getElementById("type-setter"));
+    },
+
+    defineSelectables: function (event) {
+        let popup = Popup.getPopupFromChild(event.target);
+        let input = document.getElementById("draggable-selectable-field").value;
+        try {
+            let names = input.split(",");
+            for (let i = 0; i < names.length; i++) {
+                names[i].trim();
+            }
+            Whiteboard.currentDraggable.generateSelectorHTML(names);
+            Popup.closePopup(popup);
+        } catch {
+            Notify.createNotice("Illegal input!", "negative", 3000);
+        }
     },
 
     setWhiteBoardBorderSize: function (event) {
@@ -71,10 +86,10 @@ var PopupTasks = {
                 if (Load.currentLayout === toBeRenamed) {
                     Load.updateCurrentLayout(name);
                 }
-                data = localStorage.getItem("webdashboard:" + toBeRenamed);
-                localStorage.removeItem("webdashboard:" + toBeRenamed);
-                localStorage.setItem("webdashboard:" + name, data);
-                Popup.selected.innerHTML = name;
+                data = localStorage.getItem("webdashboard-layout:" + toBeRenamed);
+                localStorage.removeItem("webdashboard-layout:" + toBeRenamed);
+                localStorage.setItem("webdashboard-layout:" + name, data);
+                Load.displayLayouts();
             }
 
         } catch(err) {

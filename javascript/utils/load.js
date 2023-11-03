@@ -4,8 +4,8 @@ var Load = {
     listLayoutNames: function () {
         layoutNames = [];
         for (let i = 0; i < localStorage.length; i++) {
-            if (/webdashboard:/.test(localStorage.key(i))) {
-                layoutNames.push(localStorage.key(i).replace(/webdashboard:/, ""));
+            if (/webdashboard-layout:/.test(localStorage.key(i))) {
+                layoutNames.push(localStorage.key(i).replace(/webdashboard-layout:/, ""));
             }
         }
         return layoutNames;
@@ -13,7 +13,7 @@ var Load = {
 
     removeLayout: function (key) {
         try {
-            if (key !== "webdashboard:default") {
+            if (key !== "webdashboard-layout:default") {
                 localStorage.removeItem(key);
             }
         } catch {
@@ -25,16 +25,16 @@ var Load = {
         let popup = Popup.getPopupFromChild(event.target);
         Load.removeLayout(key);
         let buttons = Array.from(document.getElementById("open-layout").getElementsByClassName("layout-selector-button"));
-        buttons.forEach((button) => {if (button.innerHTML === key.replace(/webdashboard:/, "")) {button.remove()}});
+        buttons.forEach((button) => {if (button.innerHTML === key.replace(/webdashboard-layout:/, "")) {button.remove()}});
         Popup.closePopup(popup);
     },    
     
     removeAllLayouts: function (event) {
         let layoutNames = Load.listLayoutNames();
         for (let i = 0; i < layoutNames.length; i++) {
-            Load.removeLayout(`webdashboard:${layoutNames[i]}`);
+            Load.removeLayout(`webdashboard-layout:${layoutNames[i]}`);
         }
-        Load.openJSONLayout("webdashboard:default");
+        Load.openJSONLayout("webdashboard-layout:default");
         Load.clearLayout();
         Whiteboard.States.clearTimeline();
         Load.defaultSave(notify=false);
@@ -74,7 +74,7 @@ var Load = {
         }
         let name = popup.getElementsByClassName("popup-input")[0].value;
         Load.updateCurrentLayout(name);    
-        localStorage.setItem("webdashboard:" + name, Load.getLayoutJSONString());
+        localStorage.setItem("webdashboard-layout:" + name, Load.getLayoutJSONString());
         Popup.closePopup(popup);
     },
 
@@ -82,19 +82,19 @@ var Load = {
         for (let i = 0; i < Whiteboard.draggables.length; i++) {
             Load.getDraggableName(Whiteboard.draggables[i]);
         }
-        localStorage.setItem(`webdashboard:${Load.currentLayout}`, Load.getLayoutJSONString());
+        localStorage.setItem(`webdashboard-layout:${Load.currentLayout}`, Load.getLayoutJSONString());
         if (notify) Notify.createNotice("Layout saved!", "positive", 3000);
     },
 
-    displayLayouts: function (event) {
-        let popup = Popup.getPopupByOpener(event.target);
+    displayLayouts: function () {
+        let popup = document.getElementById("open-layout");
         let listContainer = document.getElementById("select-json-container");
         listContainer.innerHTML = "";
         let layoutNames = Load.listLayoutNames();
-        Popup.populatePopupClickableList(document.getElementById("select-json-container"), layoutNames, (name) => name, (name, self) => {return () => {
-                Load.openJSONLayout(`webdashboard:${self.innerHTML}`); Popup.closePopup(popup);
+        Popup.populatePopupClickableList(document.getElementById("select-json-container"), layoutNames, (name) => name, (name) => {return () => {
+                Load.openJSONLayout(`webdashboard-layout:${name}`); Popup.closePopup(popup);
             }
-        });
+        }, "layout-selectable default-selectable");
     },
 
     getLayoutJSON: function () {
@@ -112,14 +112,20 @@ var Load = {
         return JSON.stringify(Load.getLayoutJSON());
     },
 
+    loadSettings: function () {
+        let settings = JSON.parse(localStorage.getItem("webdashboard-settings"));
+        Object.assign(WhiteboardSettings, settings);
+    },
+
     openJSONLayout: function (key) {
+        Load.loadSettings();
         let notDefaultBtns = Array.from(document.getElementsByClassName("not-default"));
-        if (key === "webdashboard:default") {
+        if (key === "webdashboard-layout:default") {
             notDefaultBtns.forEach((button) => button.style.display = "none");
         } else {
             notDefaultBtns.forEach((button) => button.style.display = "block");
         }
-        Load.updateCurrentLayout(key.replace(/webdashboard:/, ""));
+        Load.updateCurrentLayout(key.replace(/webdashboard-layout:/, ""));
         Load.clearLayout(logChange=false);
         try {
             let data = localStorage.getItem(key);
@@ -147,13 +153,15 @@ var Load = {
             let color = json.draggableData[i].color;
             let type = json.draggableData[i].type;
             let id = json.draggableData[i].id;
-            Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable(name, position, size, color, type, id));
+            let state = json.draggableData[i].state;
+            let otherData = json.draggableData[i].otherData;
+            Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable(name, position, size, color, type, id, state, otherData));
         }
     },
 
     exportJSON: function (key) {
         let data;
-        if (key === "webdashboard:default") {
+        if (key === "webdashboard-layout:default") {
             data = Load.getLayoutJSONString();
         } else {
             data = localStorage.getItem(key);
@@ -175,7 +183,7 @@ var Load = {
             return;
         }
         let json = document.getElementById("import-layout-json").getElementsByClassName("popup-input")[0].value;
-        localStorage.setItem(`webdashboard:${name}`, json);
+        localStorage.setItem(`webdashboard-layout:${name}`, json);
         try {
             Load.openJSON(json);
             Load.updateCurrentLayout(name);
@@ -189,10 +197,10 @@ var Load = {
     setAsDefault: function (key) {
         try {
             let data = localStorage.getItem(key);
-            localStorage.setItem("webdashboard:default", data);
+            localStorage.setItem("webdashboard-layout:default", data);
             Whiteboard.logChange();
             if (Load.currentLayout == "default") {
-                Load.openJSONLayout("webdashboard:default");
+                Load.openJSONLayout("webdashboard-layout:default");
             }
             Notify.createNotice("Set the current layout as default", "positive", 3000);
         } catch (err) {
@@ -210,6 +218,10 @@ var Load = {
         let border = document.getElementById("whiteboard-border");
         border.style.removeProperty("width");
         border.style.removeProperty("height");
+    },
+
+    layoutChanged: function () {
+        return Load.getLayoutJSONString() !== localStorage.getItem(`webdashboard-layout:${Load.currentLayout}`);
     },
 
     targetLayout: "",
