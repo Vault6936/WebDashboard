@@ -24,7 +24,7 @@ var Load = {
     safeDelete: function (event, key) {
         let popup = Popup.getPopupFromChild(event.target);
         Load.removeLayout(key);
-        let buttons = Array.from(document.getElementById("open-layout").getElementsByClassName("layout-selector-button"));
+        let buttons = Array.from(document.getElementById("open-layout").getElementsByClassName("layout-selectable"));
         buttons.forEach((button) => {if (button.innerHTML === key.replace(/webdashboard-layout:/, "")) {button.remove()}});
         Popup.closePopup(popup);
     },    
@@ -75,6 +75,7 @@ var Load = {
         let name = popup.getElementsByClassName("popup-input")[0].value;
         Load.updateCurrentLayout(name);    
         localStorage.setItem("webdashboard-layout:" + name, Load.getLayoutJSONString());
+        Load.openJSONLayout("webdashboard-layout:" + name); // May not be the most efficient, but for now re-opening the layout is easier (it runs some things that otherwise wouldn't be run)
         Popup.closePopup(popup);
     },
 

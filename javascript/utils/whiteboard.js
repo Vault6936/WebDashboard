@@ -136,6 +136,9 @@ var Whiteboard = {
                             toSelect = this.selectableGroup.selectables[i];
                         }
                     }
+                    if (toSelect == null) {
+                        return;
+                    }
                     this.selectableGroup.select(toSelect);
                     this.state = toSelect.name;
                 }
