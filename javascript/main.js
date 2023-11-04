@@ -7,12 +7,19 @@ var clientID;
 
 var isFullScreen = false;
 
+window.onresize = function() {
+    if (document.mozFullscreenElement) { 
+        console.log("hi");
+    }
+}
+
 function inFullScreen() {
-        const windowWidth = window.innerWidth * window.devicePixelRatio;
-        const windowHeight = window.innerHeight * window.devicePixelRatio;
-        const screenWidth = window.screen.width;
-        const screenHeight = window.screen.height;
-        return ((windowWidth / screenWidth) >= 0.95) && ((windowHeight / screenHeight) >= 0.95);
+    const wiewport = window.visualViewport;
+    const windowWidth = window.innerWidth * window.devicePixelRatio;
+    const windowHeight = window.innerHeight * window.devicePixelRatio;
+    const screenWidth = window.screen.width;
+    const screenHeight = window.screen.height;
+    return ((windowWidth / screenWidth) >= 0.95) && ((windowHeight / screenHeight) >= 0.95);
 }
 
 function consoleOpen() {
@@ -39,6 +46,7 @@ function initialize() { //This is called when the body portion of the html docum
     Popup.generateSimpleInputPopup("size-picker", PopupTasks.setDraggableSize, new Popup.PopupInput( "100x100", "draggable size"));
     Popup.generateSimpleInputPopup("color-picker", PopupTasks.changeColor, new Popup.PopupInput("#ffffff", "draggable color"));
     Popup.generateSimpleInputPopup("id-changer", PopupTasks.changeID, new Popup.PopupInput("Enter draggable id", "draggable id"));
+    Popup.generateSimpleInputPopup("stream-url-setter", PopupTasks.setStreamURL, new Popup.PopupInput("http://roborio-TEAM-frc.local:1181/?action=stream", "set stream url"));
 
     let draggableTypes = [];
     Object.keys(Whiteboard.WhiteboardDraggable.Types).forEach((key) => draggableTypes.push(Whiteboard.WhiteboardDraggable.Types[key]));
@@ -124,10 +132,11 @@ function generateContextMenu(event) {
         if (Whiteboard.editingMode) {
             generateContextMenuButton(container, "remove", () => {if (Whiteboard.editingMode) {Whiteboard.logChange(); Whiteboard.draggables[event.target.getAttribute("index")].delete()}});
             generateContextMenuButton(container, "set id", () => Popup.openPopup("id-changer"));
-            if (draggable.type !== "toggle") generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
+            if (draggable.type !== Whiteboard.WhiteboardDraggable.Types.TOGGLE) generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
             generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
             generateContextMenuButton(container, "set position", () => Popup.openPopup("position-setter"));
-            if (draggable.type == "selector") generateContextMenuButton(container, "define selectables", () => Popup.openPopup("draggable-selector-creator"));
+            if (draggable.type == Whiteboard.WhiteboardDraggable.Types.SELECTOR) generateContextMenuButton(container, "define selectables", () => Popup.openPopup("draggable-selector-creator"));
+            if (draggable.type == Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) generateContextMenuButton(container, "set stream url", () => Popup.openPopup("stream-url-setter"));
             generateContextMenuButton(container, "set element type", () => Popup.openPopup("type-setter"));
             generateContextMenuButton(container, "duplicate", () => Whiteboard.duplicate(Whiteboard.draggables[Whiteboard.getDraggableIndex(Whiteboard.currentDraggable.div)]));
         }    

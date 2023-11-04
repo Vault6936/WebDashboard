@@ -11,51 +11,49 @@ var Whiteboard = {
             CAMERA_STREAM: "camera steam",
         };
 
-        constructor(name, position, size, color, type, id, state, otherData) {
+        constructor(name, position, size, color, type, id, state, typeSpecificData) {
             this.bindMethods();
             this.whiteboard = document.getElementById("whiteboard");
 
-            if (otherData != undefined) this.otherData = otherData; else this.otherData = {};
-
+            // #region draggable div
             this.div = document.createElement("div");
             this.selectorContainer = document.createElement("div");
             this.selectorContainer.classList.add("draggable-selectable-container");
             this.div.appendChild(this.selectorContainer);
             this.textContainer = document.createElement("div");
             this.div.appendChild(this.textContainer);
-    
-            this.name = name;
-            this.position = position;
-            this.size = size;
-            this.color = color;
-            this.type = null;
-            try {
-                this.otherData.selectableNames = otherData.selectableNames;
-            } catch {
-                this.otherData.selectableNames = [];
-            };
-
-            this.setType(type);
-            this.state = state == undefined ? false : state;
-
-    
-            this.arrayIndex = 0;
-            this.updateIndex(Whiteboard.draggables.length);
-    
-            this.id = null;
-            this.setId(id);
-
-    
-            this.draggingDiv = false;
-    
+            this.stream = document.createElement("img");
+            this.div.appendChild(this.stream);
             this.container = document.createElement("span");
             this.label = document.createElement("input");
             if (!Whiteboard.editingMode) this.label.readOnly = true;   
             this.div.className = "whiteboard-draggable";
             this.div.background = this.color;
+            // #endregion 
     
-            this.setSize(this.size);       
+            // #region declare class fields
+            this.name = name;
+            this.position = position;
+            this.size = size;
+            this.color = color;
+            this.type = null;
+            if (typeSpecificData != undefined) this.typeSpecificData = typeSpecificData; else this.typeSpecificData = {};
+            try {
+                this.typeSpecificData.selectableNames = typeSpecificData.selectableNames;
+            } catch {
+                this.typeSpecificData.selectableNames = [];
+            };
+            this.setType(type);
+            this.state = state == undefined ? false : state;    
+            this.arrayIndex = 0;
+            this.updateIndex(Whiteboard.draggables.length);    
+            this.id = null;
+            this.setId(id);
+            // #endregion
     
+            // #region dragging functionality
+            this.draggingDiv = false;
+            this.setSize(this.size);    
             this.div.onmousedown = function(event) {
                 if (Whiteboard.editingMode && event.button === 0) {
                     if (this.draggingDiv) {
@@ -67,15 +65,16 @@ var Whiteboard = {
                         this.draggingDiv = true;
                     }
                 }
-            }.bind(this);
-    
-            [document, window, this.div].forEach(((thing) => {thing.onpointerup = this.stopDragging; thing.onmouseup = this.stopDragging}).bind(this));
-    
+            }.bind(this);    
+            [document, window, this.div].forEach(((thing) => {thing.onpointerup = this.stopDragging; thing.onmouseup = this.stopDragging}).bind(this));    
             this.div.onmouseover = (event) => {
                 if (Whiteboard.editingMode) {event.target.style.cursor = "move"} else if (this.type === "button") {event.target.style.cursor = "pointer"; event.target.style.background = "#0098cb"} else {event.target.style.cursor = "auto"}
             }
-            this.div.onmouseleave = (event) => {event.target.classList.remove("whiteboard-button"), event.target.style.background = this.color}
-            this.div.dispatchEvent(new Event("mouseleave")); //If this event isn't dispatched, the program will glitch and cause the element to think the mouse is over it
+            this.div.onmouseleave = (event) => {event.target.style.background = this.color}
+            this.div.dispatchEvent(new Event("mouseleave")); //If this event isn't dispatched, the program might glitch and cause the element to think the mouse is over it
+            // #endregion
+
+            // #region set initial position
             this.container.appendChild(this.div);
             this.whiteboard.appendChild(this.container);
             this.label.setAttribute("type", "text");
@@ -86,6 +85,7 @@ var Whiteboard = {
             Whiteboard.dragOffset = new Positioning.Vector2d(0, 0);
             this.setPosition(this.position);
             this.div.onclick = this.handleClick;
+            // #endregion
         }
 
         bindMethods() {
@@ -99,14 +99,14 @@ var Whiteboard = {
             this.setColor = this.setColor.bind(this);
             this.setType = this.setType.bind(this);
             this.setId = this.setId.bind(this);
+            this.setStreamURL = this.setStreamURL.bind(this);
             this.handleClick = this.handleClick.bind(this);
-            this.equals = this.equals.bind(this);
             this.generateSelectorHTML = this.generateSelectorHTML.bind(this);
         }
 
         generateSelectorHTML(selectableNames) {
             if (selectableNames == undefined) return;
-            this.otherData.selectableNames = selectableNames;
+            this.typeSpecificData.selectableNames = selectableNames;
             this.selectorContainer.innerHTML = "";
             let group = new Popup.SelectableGroup();
             for (let i = 0; i < selectableNames.length; i++) {
@@ -187,24 +187,27 @@ var Whiteboard = {
             this.div.style.width = Positioning.toHTMLPositionPX(this.size.x);
             this.div.style.height = Positioning.toHTMLPositionPX(this.size.y);
             this.label.style.width = Positioning.toHTMLPositionPX(Positioning.clamp(this.size.x * 0.75, 75, Number.POSITIVE_INFINITY));        
-            Whiteboard.dragOffset = new Positioning.Vector2d(0, 0);
-            this.setPosition(this.position);
+            Whiteboard.dragOffset = new Positioning.Vector2d(0, 0); // Calling setPosition() will take into account the dragOffset variable.  This isn't desirable here, so it is set to (0, 0)
+            this.setPosition(this.position); // If this method is not called, the position of the label relative to that of the div will be wrong
         }
         setType(type) {
             this.div.style.overflow = "hidden";
             this.selectorContainer.innerHTML = "";
+            this.stream.src = "";
             if (type == undefined || type == null) {
                 type = "button";
             } else if (type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                 this.setColor("red");
             } else if (type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
-                this.generateSelectorHTML(this.otherData.selectableNames);
+                this.generateSelectorHTML(this.typeSpecificData.selectableNames);
             } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
                 this.div.innerHTML = this.state;
                 this.div.style.overflow = "scroll";
+            } else if (type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
+                this.setStreamURL(this.typeSpecificData.streamURL);
             }
             this.type = type;
-            if (type !== Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
+            if (type !== Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) { // Because of aysnchronous functions that may run while this function is running, this code cannot be called at the top of the function (the text container may simply be populated again)
                 this.textContainer.innerHTML = "";
             }
         }
@@ -222,6 +225,10 @@ var Whiteboard = {
             this.color = color;
             this.div.style.background = color;
         }
+        setStreamURL(url) {
+            this.typeSpecificData.streamURL = url;
+            this.stream.url = url;
+        }
         updateIndex(index) {
             this.arrayIndex = index;
             this.div.setAttribute("index", index);
@@ -232,26 +239,14 @@ var Whiteboard = {
             for (let i = 0; i < Whiteboard.draggables.length; i++) {
                 if (i != this.arrayIndex) {
                     temp.push(Whiteboard.draggables[i]);
-                    Whiteboard.draggables[i].updateIndex(updatedIndex); // Resets the index variable of the draggable so the draggable can find itself in the new Draggable.draggables array
+                    Whiteboard.draggables[i].updateIndex(updatedIndex); // Resets the index variable of the draggable so the draggable can find itself in the new draggables array
                     updatedIndex++;
                 }
             }
             Whiteboard.draggables = temp;
             this.div.parentElement.remove();
         }
-        resetProperties(draggable) {
-            this.setName(draggable.name);
-            this.setPosition(draggable.position);
-            this.setSize(draggable.size);
-            this.setColor(draggable.color);
-            this.setType(draggable.type);
-            this.setId(draggable.id);
-        }
-        equals(draggable) {
-            return draggable.name === this.name && this.position.equals(draggable.position) 
-            && this.size.equals(draggable.size) && draggable.color == this.color && draggable.type == this.type && draggable.id == this.id;
-        }
-        copy() {
+        getShallowCopy() {
             let object = {};
             object.name = this.name;
             object.position = this.position;
@@ -260,7 +255,7 @@ var Whiteboard = {
             object.type = this.type;
             object.id = this.id;
             object.state = this.state;
-            object.otherData = this.otherData;
+            object.typeSpecificData = this.typeSpecificData;
             return object;
         }
     },

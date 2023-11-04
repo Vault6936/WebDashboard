@@ -100,7 +100,7 @@ var Load = {
     getLayoutJSON: function () {
         let data = {};
         let draggableData = [];
-        Whiteboard.draggables.forEach((draggable) => draggableData.push(draggable.copy()));
+        Whiteboard.draggables.forEach((draggable) => draggableData.push(draggable.getShallowCopy()));
         data.draggableData = draggableData;
         let border = document.getElementById("whiteboard-border");
         data.border = {"width": border.style.width, "height": border.style.height};
@@ -154,8 +154,8 @@ var Load = {
             let type = json.draggableData[i].type;
             let id = json.draggableData[i].id;
             let state = json.draggableData[i].state;
-            let otherData = json.draggableData[i].otherData;
-            Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable(name, position, size, color, type, id, state, otherData));
+            let typeSpecificData = json.draggableData[i].typeSpecificData;
+            Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable(name, position, size, color, type, id, state, typeSpecificData));
         }
     },
 

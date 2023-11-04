@@ -56,6 +56,13 @@ var PopupTasks = {
         }
     },
 
+    setStreamURL: function (event) {
+        let popup = Popup.getPopupFromChild(event.target);
+        let url = popup.getElementsByClassName("popup-input")[0];
+        Whiteboard.currentDraggable.setStreamURL(url);
+        Popup.closePopup(popup);
+    },
+
     setWhiteBoardBorderSize: function (event) {
         Whiteboard.logChange();
         let popup = Popup.getPopupFromChild(event.target);

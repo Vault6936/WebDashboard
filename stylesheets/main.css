@@ -26,6 +26,7 @@ body {
     top: 50%;
     width: 70%;
     transform: translate(-50%, -50%);
+    background-color: white;
 }
 
 .default-text {
@@ -134,10 +135,6 @@ body {
     overflow: scroll;
     font-family: Roboto;
     font-size: 15px;
-}
-
-.whiteboard-button {
-    background-color: white;
 }
 
 .whiteboard-label {
