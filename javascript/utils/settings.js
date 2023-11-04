@@ -12,7 +12,7 @@ var WhiteboardSettings = {
     saveSettings: function (event) {
         let popup = Popup.getPopupFromChild(event.target);
         WhiteboardSettings.teamNumber = Popup.getInputValue("team-number");
-        console.log(WhiteboardSettings.teamNumber);
+        WhiteboardSettings.websocketURL = Popup.getInputValue("websocket-url");
         localStorage.setItem("webdashboard-settings", JSON.stringify(WhiteboardSettings));
         Popup.closePopup(popup);
     },

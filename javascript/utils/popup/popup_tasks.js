@@ -47,7 +47,8 @@ var PopupTasks = {
         try {
             let names = input.split(",");
             for (let i = 0; i < names.length; i++) {
-                names[i].trim();
+                names[i] = names[i].trim();
+                names[i] = names[i].replace(/[\n\r\t]/, "");
             }
             Whiteboard.currentDraggable.generateSelectorHTML(names);
             Popup.closePopup(popup);

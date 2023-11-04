@@ -43,8 +43,10 @@ var Whiteboard = {
             } catch {
                 this.typeSpecificData.selectableNames = [];
             };
+            this.selectableGroup = null;
             this.setType(type);
             this.state = state == undefined ? false : state;    
+            this.setState(this.state);
             this.arrayIndex = 0;
             this.updateIndex(Whiteboard.draggables.length);    
             this.id = null;
@@ -102,35 +104,49 @@ var Whiteboard = {
             this.setStreamURL = this.setStreamURL.bind(this);
             this.handleClick = this.handleClick.bind(this);
             this.generateSelectorHTML = this.generateSelectorHTML.bind(this);
+            this.getShallowCopy = this.getShallowCopy.bind(this);
         }
 
         generateSelectorHTML(selectableNames) {
             if (selectableNames == undefined) return;
             this.typeSpecificData.selectableNames = selectableNames;
             this.selectorContainer.innerHTML = "";
-            let group = new Popup.SelectableGroup();
+            this.selectableGroup = new Popup.SelectableGroup();
             for (let i = 0; i < selectableNames.length; i++) {
-                group.add(new Popup.Selectable(selectableNames[i], (() => {this.state = selectableNames[i]}).bind(this), "draggable-unselect", "draggable-select", true));
+                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => {this.state = selectableNames[i]}).bind(this), "draggable-unselect", "draggable-select", true));
             }
-            group.generateHTML(this.selectorContainer);
+            this.selectableGroup.generateHTML(this.selectorContainer);
         }
 
         setState(state) {
-            this.state = state;
-            if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
-                if (state) {
-                    this.setColor("limegreen");
-                } else {
-                    this.setColor("red");
-                }      
-            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
-                this.textContainer.innerHTML = state;
+            try {
+                this.state = state;
+                if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE || this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
+                    if (state) {
+                        this.setColor("limegreen");
+                    } else {
+                        this.setColor("red");
+                    }      
+                } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
+                    this.textContainer.innerHTML = state;
+                } else if (this.type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
+                    let toSelect = null;
+                    for (let i = 0; i < this.selectableGroup.selectables.length; i++) {
+                        if (this.selectableGroup.selectables[i].name == state) {
+                            toSelect = this.selectableGroup.selectables[i];
+                        }
+                    }
+                    this.selectableGroup.select(toSelect);
+                    this.state = toSelect.name;
+                }
+            } catch {
+                Notify.createNotice("Could not apply draggable state", "negative", 2000);
             }
         }
     
         handleClick() {
             if (!Whiteboard.editingMode) {
-                if (this.type == "toggle") {
+                if (this.type == Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                     this.setState(!this.state);
                 }
                 if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON || this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
@@ -139,9 +155,9 @@ var Whiteboard = {
                         data["id"] = this.id;
                         data["type"] = this.type;
                         if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
-                            data["status"] = "click";
+                            data["state"] = "click";
                         } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
-                            data["status"] = this.state.toString();
+                            data["state"] = this.state.toString();
                         };
                         Socket.websocket.send(data);
                     } catch {
@@ -153,7 +169,6 @@ var Whiteboard = {
 
         handleDataFromRio(dataObject) {
             this.setState(dataObject.state);
-            this.value = dataObject.value;
         }
 
         updateValue(value) {

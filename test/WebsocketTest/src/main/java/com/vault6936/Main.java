@@ -8,7 +8,8 @@ public class Main {
         System.out.println("Websocket server initialized");
         int i = 0;
         while (true) {
-            WebdashboardLayout.setNodeValue("text_telemetry_5", "WE ALL LIVE IN A GREEN SUBMARINE.  IT USED TO BE YELLOW BUT WE PAINTED IT GREEN.  WE'VE BEEN LIVING IN THE SUBMARINE FOR " + i + " DAYS AND WE EAT SUBS NOMMMY NOM NOM NOM HAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMmm");
+            //WebdashboardLayout.setNodeValue("text", "WE ALL LIVE IN A GREEN SUBMARINE.  IT USED TO BE YELLOW BUT WE PAINTED IT GREEN.  WE'VE BEEN LIVING IN THE SUBMARINE FOR " + i + " DAYS AND WE EAT SUBS NOMMMY NOM NOM NOM HAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMmm");
+            //WebdashboardLayout.setNodevalue()
             i++;
             Thread.sleep(1000);
         }

@@ -144,6 +144,7 @@ function generateContextMenu(event) {
         generateContextMenuButton(container, "set whiteboard size", () => {Popup.openPopup("whiteboard-size-setter")});
     } else if (event.target.classList.contains("selectable")) {
         if (event.target.classList.contains("layout-selectable")) {
+            Popup.selected = event.target;
             if (event.target.innerHTML !== "default") {
                 generateContextMenuButton(container, "delete", () => {Load.targetLayout = event.target.innerHTML; Popup.openPopup("remove-layout")});
                 generateContextMenuButton(container, "rename", () => {Popup.openPopup("layout-renamer")});

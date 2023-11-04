@@ -1,7 +1,7 @@
 var Socket = {
     websocket: null,
     websocketURL: "ws://10.69.36.2:5800",//"ws://127.0.0.1:5800",
-    clientID : Date.now(),
+    clientID: Date.now(),
     lastMessageTimestamp: 0,
     connecting: false,
 
@@ -33,7 +33,7 @@ var Socket = {
             Notify.createNotice("Attempting to connect to the RoboRio...", "neutral", 3000);
         }
         try {
-            Socket.websocket = new WebSocket(Socket.websocketURL);
+            Socket.websocket = new WebSocket(WhiteboardSettings.websocketURL);
         } catch {
             console.error("Error creating websocket")
         }
@@ -65,7 +65,7 @@ var Socket = {
 
             } catch (err) {
                 console.warn(err);
-                Notify.createNotice("Could not apply message from Rio", "negative", 3000);
+                Notify.createNotice("Received invalid message from the RoboRio", "negative", 3000);
             }
         }
     },
