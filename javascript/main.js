@@ -7,8 +7,8 @@ var clientID;
 
 var isFullScreen = false;
 
-window.onresize = function() {
-    if (document.mozFullscreenElement) { 
+window.onresize = function () {
+    if (document.mozFullscreenElement) {
         console.log("hi");
     }
 }
@@ -33,17 +33,16 @@ function initialize() { //This is called when the body portion of the html docum
         setTimeout(() => Notify.createNotice("Welcome :)", "positive", 5000), 3000);
     }
 
-
     Socket.initializeSocket();
 
     let banner = document.getElementById("banner-container");
-    setTimeout(() => {banner.style.top = "-100%"; setTimeout(() => banner.style.display = "none", 2000)}, 500);
+    setTimeout(() => { banner.style.top = "-100%"; setTimeout(() => banner.style.display = "none", 2000) }, 500);
     addEventListeners();
 
-    Popup.generateSimpleInputPopup("Load-layout-as", Load.saveJSON, new Popup.PopupInput("Enter the new layout name", "Load as"));    
+    Popup.generateSimpleInputPopup("Load-layout-as", Load.saveJSON, new Popup.PopupInput("Enter the new layout name", "Load as"));
     Popup.generateSimpleInputPopup("layout-renamer", PopupTasks.renameLayout, new Popup.PopupInput("Enter the new layout name", "rename layout"));
     Popup.generateSimpleInputPopup("whiteboard-size-setter", PopupTasks.setWhiteBoardBorderSize, new Popup.PopupInput("750x500", "border size"));
-    Popup.generateSimpleInputPopup("size-picker", PopupTasks.setDraggableSize, new Popup.PopupInput( "100x100", "draggable size"));
+    Popup.generateSimpleInputPopup("size-picker", PopupTasks.setDraggableSize, new Popup.PopupInput("100x100", "draggable size"));
     Popup.generateSimpleInputPopup("color-picker", PopupTasks.changeColor, new Popup.PopupInput("#ffffff", "draggable color"));
     Popup.generateSimpleInputPopup("id-changer", PopupTasks.changeID, new Popup.PopupInput("Enter draggable id", "draggable id"));
     Popup.generateSimpleInputPopup("stream-url-setter", PopupTasks.setStreamURL, new Popup.PopupInput("http://roborio-TEAM-frc.local:1181/?action=stream", "set stream url"));
@@ -51,7 +50,7 @@ function initialize() { //This is called when the body portion of the html docum
     let draggableTypes = [];
     Object.keys(Whiteboard.WhiteboardDraggable.Types).forEach((key) => draggableTypes.push(Whiteboard.WhiteboardDraggable.Types[key]));
 
-    Popup.populatePopupClickableList(document.getElementById("select-type-container"), draggableTypes, (iterable) => iterable, (iterable) => {return () => PopupTasks.setType(iterable)});
+    Popup.populatePopupClickableList(document.getElementById("select-type-container"), draggableTypes, (iterable) => iterable, (iterable) => { return () => PopupTasks.setType(iterable) });
 
     Popup.populateVerticalInputs(document.getElementById("websocket-info-wrapper"), new Popup.PopupInput("6936", "team number", "team-number"), new Popup.PopupInput("ws://10.xx.yy.2:5800", "websocket url", "websocket-url"));
     Popup.populateVerticalInputs(document.getElementById("default-settings-wrapper"), new Popup.PopupInput("100x100", "default draggable size", "default-size"), new Popup.PopupInput("#000000", "default draggable color", "default-color"));
@@ -68,9 +67,9 @@ function addEventListeners() {
     addEventListener("keydown", (event) => {
         if ((event.ctrlKey || event.metaKey)) { //meta key is for MacOS
             if (event.key == "s") {
-              event.preventDefault();
-              Load.defaultSave();
-              Notify.createNotice("Layout saved!", "positive", 3000);
+                event.preventDefault();
+                Load.defaultSave();
+                Notify.createNotice("Layout saved!", "positive", 3000);
             } else if (event.key == "z") {
                 Whiteboard.undoChange();
             } else if (event.key == "y") {
@@ -78,13 +77,13 @@ function addEventListeners() {
             }
         }
     });
-    addEventListener("mousemove", (event) => {Positioning.mousePosition = new Positioning.Vector2d(event.clientX, event.clientY)});
+    addEventListener("mousemove", (event) => { Positioning.mousePosition = new Positioning.Vector2d(event.clientX, event.clientY) });
     oncontextmenu = (event) => generateContextMenu(event), false;
     onmousedown = (event) => removeMenu(event);
-    onbeforeunload = () => {if (Load.layoutChanged()) return "Are you sure you want to leave the page?"};
+    onbeforeunload = () => { if (Load.layoutChanged()) return "Are you sure you want to leave the page?" };
 
     CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("enterfullscreen", inFullScreen, window));
-    CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("exitfullscreen", () => {return !inFullScreen()}, window));
+    CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("exitfullscreen", () => { return !inFullScreen() }, window));
     CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("devtoolsopen", consoleOpen, window));
 
     addEventListener("enterfullscreen", enterFullScreen);
@@ -98,7 +97,7 @@ function getBorderWidth(element) {
 
 function removeMenu(event) {
     try {
-        if (event == null || event.target.className != "menu-button") { 
+        if (event == null || event.target.className != "menu-button") {
             document.getElementById("menu-container").remove();
         }
     } catch {
@@ -109,9 +108,9 @@ function removeMenu(event) {
 function generateContextMenuButton(parent, name, onclick) {
     let button = document.createElement("a");
     button.innerHTML = name;
-    button.onclick = function() {
+    button.onclick = function () {
         try {
-            onclick(); 
+            onclick();
         } finally {
             removeMenu();
         }
@@ -130,7 +129,7 @@ function generateContextMenu(event) {
         let draggable = Whiteboard.draggables[Whiteboard.getDraggableIndex(event.target)]
         Whiteboard.currentDraggable = draggable;
         if (Whiteboard.editingMode) {
-            generateContextMenuButton(container, "remove", () => {if (Whiteboard.editingMode) {Whiteboard.logChange(); Whiteboard.draggables[event.target.getAttribute("index")].delete()}});
+            generateContextMenuButton(container, "remove", () => { if (Whiteboard.editingMode) { Whiteboard.logChange(); Whiteboard.draggables[event.target.getAttribute("index")].delete() } });
             generateContextMenuButton(container, "set id", () => Popup.openPopup("id-changer"));
             if (draggable.type !== Whiteboard.WhiteboardDraggable.Types.TOGGLE) generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
             generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
@@ -139,18 +138,18 @@ function generateContextMenu(event) {
             if (draggable.type == Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) generateContextMenuButton(container, "set stream url", () => Popup.openPopup("stream-url-setter"));
             generateContextMenuButton(container, "set element type", () => Popup.openPopup("type-setter"));
             generateContextMenuButton(container, "duplicate", () => Whiteboard.duplicate(Whiteboard.draggables[Whiteboard.getDraggableIndex(Whiteboard.currentDraggable.div)]));
-        }    
+        }
     } else if (event.target.id == "whiteboard-border") {
-        generateContextMenuButton(container, "set whiteboard size", () => {Popup.openPopup("whiteboard-size-setter")});
+        generateContextMenuButton(container, "set whiteboard size", () => { Popup.openPopup("whiteboard-size-setter") });
     } else if (event.target.classList.contains("selectable")) {
         if (event.target.classList.contains("layout-selectable")) {
             Popup.selected = event.target;
             if (event.target.innerHTML !== "default") {
-                generateContextMenuButton(container, "delete", () => {Load.targetLayout = event.target.innerHTML; Popup.openPopup("remove-layout")});
-                generateContextMenuButton(container, "rename", () => {Popup.openPopup("layout-renamer")});
-                generateContextMenuButton(container, "set as default", () => {Load.setAsDefault(`webdashboard:${event.target.innerHTML}`)});
+                generateContextMenuButton(container, "delete", () => { Load.targetLayout = event.target.innerHTML; Popup.openPopup("remove-layout") });
+                generateContextMenuButton(container, "rename", () => { Popup.openPopup("layout-renamer") });
+                generateContextMenuButton(container, "set as default", () => { Load.setAsDefault(`webdashboard:${event.target.innerHTML}`) });
             }
-            generateContextMenuButton(container, "export json", () => {Load.exportJSON(`webdashboard:${event.target.innerHTML}`)});
+            generateContextMenuButton(container, "export json", () => { Load.exportJSON(`webdashboard:${event.target.innerHTML}`) });
         }
     }
     document.body.appendChild(container);

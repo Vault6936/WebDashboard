@@ -10,6 +10,8 @@ repositories {
 }
 
 dependencies {
+    implementation("org.json:org.json:chargebee-1.0");
+    implementation("com.google.code.gson:gson:2.10.1")
     implementation("javax.json:javax.json-api:1.1.4")
     implementation("org.glassfish:javax.json:1.1.4")
     implementation("org.java-websocket:Java-WebSocket:1.5.3")

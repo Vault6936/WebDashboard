@@ -21,36 +21,37 @@ var Notify = {
             this.container.style.backgroundColor = color;
             document.body.appendChild(this.container);
             this.fade = null;
-    
-    
-            this.fadeInAnimation = [{opacity: 0}, {opacity: 1}];
-            this.fadeOutAnimation = [{opacity: 1}, {opacity: 0}];
-            this.fadeTiming = {duration: 500, iterations: 1};
-    
+
+
+            this.fadeInAnimation = [{ opacity: 0 }, { opacity: 1 }];
+            this.fadeOutAnimation = [{ opacity: 1 }, { opacity: 0 }];
+            this.fadeTiming = { duration: 500, iterations: 1 };
+
             this.fadeSequence();
-    
+
             this.duration = duration;
         }
-            
+
         fadeSequence() {
             let fadeIn = new Promise((resolve, reject) => {
                 try {
-                    this.container.animate(this.fadeInAnimation, this.fadeTiming); 
-                    this.container.style.opacity = "1.0"; 
+                    this.container.animate(this.fadeInAnimation, this.fadeTiming);
+                    this.container.style.opacity = "1.0";
                     resolve();
                 } catch {
                     reject("Failed to properly display notice.  Check your browser version.");
                 }
-    
+
             });
             fadeIn.then(() => {
                 return new Promise((resolve) => {
                     setTimeout(() => {
-                    this.container.animate(this.fadeOutAnimation, this.fadeTiming).finished.then(() => resolve()); //https://developer.mozilla.org/en-US/docs/Web/API/Animation/finished
-                }, this.duration)
-            }
-            )}).then(() => this.container.remove());
-        }    
+                        this.container.animate(this.fadeOutAnimation, this.fadeTiming).finished.then(() => resolve()); //https://developer.mozilla.org/en-US/docs/Web/API/Animation/finished
+                    }, this.duration)
+                }
+                )
+            }).then(() => this.container.remove());
+        }
     },
 
     createNotice: function (message, type, duration) {

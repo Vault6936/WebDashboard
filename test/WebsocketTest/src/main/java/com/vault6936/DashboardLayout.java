@@ -1,25 +1,25 @@
 package com.vault6936;
 
 import javax.json.*;
-import java.net.http.WebSocket;
+import org.java_websocket.WebSocket;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class WebdashboardLayout {
+public class DashboardLayout {
 
     public ArrayList<DashboardNode> nodes;
     public final WebSocket socket;
 
-    public WebdashboardLayout(WebSocket socket) {
+    public DashboardLayout(WebSocket socket) {
         this.socket = socket;
     }
 
     public void update(JsonObject object) {
-        ArrayList<WebdashboardLayout.DashboardNode> nodes = new ArrayList<>();
-        JsonArray jsonValues = object.getJsonArray("draggables");
+        ArrayList<DashboardLayout.DashboardNode> nodes = new ArrayList<>();
+        JsonArray jsonValues = object.getJsonArray("layout");
         for (JsonValue jsonValue : jsonValues) {
             JsonObject node = jsonValue.asJsonObject();
-            nodes.add(new DashboardNode(node.getString("id"), getNodeType(node.getString("type")), node.getString("value")));
+            nodes.add(new DashboardNode(node.getString("id"), getNodeType(node.getString("type")), String.valueOf(node.get("state"))));
         }
         this.nodes = nodes;
     }

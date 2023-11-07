@@ -26,7 +26,7 @@ var PopupTasks = {
         Popup.closePopup(popup);
     },
 
-    setPosition: function(event) {
+    setPosition: function (event) {
         Whiteboard.logChange();
         let popup = Popup.getPopupFromChild(event.target);
         const x = parseInt(document.getElementById("x-pose-input").getElementsByClassName("popup-input")[0].value);
@@ -72,7 +72,7 @@ var PopupTasks = {
         let border = document.getElementById("whiteboard-border");
         border.style.width = Positioning.toHTMLPositionPX(size[0]);
         border.style.height = Positioning.toHTMLPositionPX(size[1]);
-        Popup.closePopup(popup);    
+        Popup.closePopup(popup);
     },
 
     renameLayout: function (event) {
@@ -100,7 +100,7 @@ var PopupTasks = {
                 Load.displayLayouts();
             }
 
-        } catch(err) {
+        } catch (err) {
             console.log(err);
             Notify.createNotice("Could not rename layout!  Try reloading the page.", "negative", 2500);
         }

@@ -2,7 +2,7 @@ var Whiteboard = {
 
     WhiteboardDraggable: class {
 
-        static Types =  {
+        static Types = {
             BUTTON: "button",
             TOGGLE: "toggle",
             SELECTOR: "selector",
@@ -21,16 +21,17 @@ var Whiteboard = {
             this.selectorContainer.classList.add("draggable-selectable-container");
             this.div.appendChild(this.selectorContainer);
             this.textContainer = document.createElement("div");
+            this.textContainer.classList.add("draggable-text-container");
             this.div.appendChild(this.textContainer);
             this.stream = document.createElement("img");
             this.div.appendChild(this.stream);
             this.container = document.createElement("span");
             this.label = document.createElement("input");
-            if (!Whiteboard.editingMode) this.label.readOnly = true;   
+            if (!Whiteboard.editingMode) this.label.readOnly = true;
             this.div.className = "whiteboard-draggable";
             this.div.background = this.color;
             // #endregion 
-    
+
             // #region declare class fields
             this.name = name;
             this.position = position;
@@ -45,34 +46,34 @@ var Whiteboard = {
             };
             this.selectableGroup = null;
             this.setType(type);
-            this.state = state == undefined ? false : state;    
+            this.state = state;
             this.setState(this.state);
             this.arrayIndex = 0;
-            this.updateIndex(Whiteboard.draggables.length);    
+            this.updateIndex(Whiteboard.draggables.length);
             this.id = null;
             this.setId(id);
             // #endregion
-    
+
             // #region dragging functionality
             this.draggingDiv = false;
-            this.setSize(this.size);    
-            this.div.onmousedown = function(event) {
+            this.setSize(this.size);
+            this.div.onmousedown = function (event) {
                 if (Whiteboard.editingMode && event.button === 0) {
                     if (this.draggingDiv) {
                         this.stopDragging();
                     } else {
-                        Whiteboard.dragOffset = new Positioning.Vector2d(Positioning.mousePosition.x - this.div.getBoundingClientRect().left, Positioning.mousePosition.y - this.div.getBoundingClientRect().top); 
+                        Whiteboard.dragOffset = new Positioning.Vector2d(Positioning.mousePosition.x - this.div.getBoundingClientRect().left, Positioning.mousePosition.y - this.div.getBoundingClientRect().top);
                         addEventListener("mousemove", this.mouseDrag);
                         Whiteboard.logChange();
                         this.draggingDiv = true;
                     }
                 }
-            }.bind(this);    
-            [document, window, this.div].forEach(((thing) => {thing.onpointerup = this.stopDragging; thing.onmouseup = this.stopDragging}).bind(this));    
+            }.bind(this);
+            [document, window, this.div].forEach(((thing) => { thing.onpointerup = this.stopDragging; thing.onmouseup = this.stopDragging }).bind(this));
             this.div.onmouseover = (event) => {
-                if (Whiteboard.editingMode) {event.target.style.cursor = "move"} else if (this.type === "button") {event.target.style.cursor = "pointer"; event.target.style.background = "#0098cb"} else {event.target.style.cursor = "auto"}
+                if (Whiteboard.editingMode) { event.target.style.cursor = "move" } else if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON || this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) { event.target.style.cursor = "pointer"; if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) event.target.style.background = "#0098cb" } else { event.target.style.cursor = "auto" }
             }
-            this.div.onmouseleave = (event) => {event.target.style.background = this.color}
+            this.div.onmouseleave = (event) => { event.target.style.background = this.color }
             this.div.dispatchEvent(new Event("mouseleave")); //If this event isn't dispatched, the program might glitch and cause the element to think the mouse is over it
             // #endregion
 
@@ -113,7 +114,7 @@ var Whiteboard = {
             this.selectorContainer.innerHTML = "";
             this.selectableGroup = new Popup.SelectableGroup();
             for (let i = 0; i < selectableNames.length; i++) {
-                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => {this.state = selectableNames[i]}).bind(this), "draggable-unselect", "draggable-select", true));
+                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => { this.state = selectableNames[i]; Socket.sendLayout() }).bind(this), "draggable-unselect", "draggable-select", true));
             }
             this.selectableGroup.generateHTML(this.selectorContainer);
         }
@@ -122,12 +123,17 @@ var Whiteboard = {
             try {
                 this.state = state;
                 if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE || this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
-                    if (state) {
+                    if (state === "true") this.state = true;
+                    if (state === "false") this.state = false;
+                }
+                if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE || this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
+                    if (this.state) {
                         this.setColor("limegreen");
                     } else {
                         this.setColor("red");
-                    }      
+                    }
                 } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
+                    this.textContainer.style.display = "block";
                     this.textContainer.innerHTML = state;
                 } else if (this.type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
                     let toSelect = null;
@@ -136,9 +142,7 @@ var Whiteboard = {
                             toSelect = this.selectableGroup.selectables[i];
                         }
                     }
-                    if (toSelect == null) {
-                        return;
-                    }
+                    if (toSelect == null) return;
                     this.selectableGroup.select(toSelect);
                     this.state = toSelect.name;
                 }
@@ -146,7 +150,7 @@ var Whiteboard = {
                 Notify.createNotice("Could not apply draggable state", "negative", 2000);
             }
         }
-    
+
         handleClick() {
             if (!Whiteboard.editingMode) {
                 if (this.type == Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
@@ -162,7 +166,7 @@ var Whiteboard = {
                         } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                             data["state"] = this.state.toString();
                         };
-                        Socket.websocket.send(data);
+                        Socket.sendLayout();
                     } catch {
                         console.warn("Unable to send data to RoboRio");
                     }
@@ -170,87 +174,91 @@ var Whiteboard = {
             }
         }
 
-        handleDataFromRio(dataObject) {
-            this.setState(dataObject.state);
-        }
-
-        updateValue(value) {
-            this.div.innerHTML = value;
-        }
-
-        mouseDrag() { 
+        mouseDrag() {
             this.setPosition(Positioning.mousePosition);
-        };   
+        }
 
         stopDragging() {
-            removeEventListener("mousemove", this.mouseDrag); 
+            removeEventListener("mousemove", this.mouseDrag);
             Whiteboard.dragOffset = new Positioning.Vector2d(0, 0);
             this.draggingDiv = false;
         }
-    
-        setPosition(pose){
+
+        setName(name) {
+            this.name = name;
+        }
+
+        setPosition(pose) {
             const x = Positioning.clamp((pose.x - Whiteboard.dragOffset.x), 25, this.whiteboard.clientWidth - this.div.clientWidth - 25);
             const y = Positioning.clamp((pose.y - Whiteboard.dragOffset.y), 65, this.whiteboard.clientHeight - this.div.clientHeight - 50);
-    
             this.position = new Positioning.Vector2d(x, y);
-    
             this.div.style.left = Positioning.toHTMLPositionPX(x);
             this.div.style.top = Positioning.toHTMLPositionPX(y);
             const labelOffset = (this.div.clientWidth - (this.label.clientWidth + getBorderWidth(this.label))) / 2;
             this.label.style.left = Positioning.toHTMLPositionPX(x + labelOffset);
             this.label.style.top = Positioning.toHTMLPositionPX(y + this.div.clientHeight + 10);
         }
+
         setSize(size) {
             this.size = new Positioning.Vector2d(Positioning.clamp(size.x, 50, this.whiteboard.clientWidth * 0.75), Positioning.clamp(size.y, 50, this.whiteboard.clientHeight * 0.75));
             this.div.style.width = Positioning.toHTMLPositionPX(this.size.x);
             this.div.style.height = Positioning.toHTMLPositionPX(this.size.y);
-            this.label.style.width = Positioning.toHTMLPositionPX(Positioning.clamp(this.size.x * 0.75, 75, Number.POSITIVE_INFINITY));        
+            this.label.style.width = Positioning.toHTMLPositionPX(Positioning.clamp(this.size.x * 0.75, 75, Number.POSITIVE_INFINITY));
             Whiteboard.dragOffset = new Positioning.Vector2d(0, 0); // Calling setPosition() will take into account the dragOffset variable.  This isn't desirable here, so it is set to (0, 0)
             this.setPosition(this.position); // If this method is not called, the position of the label relative to that of the div will be wrong
         }
+
+        setColor(color) {
+            this.color = color;
+            this.div.style.background = color;
+        }
+
         setType(type) {
-            this.div.style.overflow = "hidden";
+            this.textContainer.style.display = "none";
             this.selectorContainer.innerHTML = "";
+            this.selectorContainer.style.display = "none";
             this.stream.src = "";
+            if (this.type != type) {
+                this.state = "";
+            }
             if (type == undefined || type == null) {
                 type = "button";
             } else if (type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                 this.setColor("red");
             } else if (type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
+                this.selectorContainer.style.display = "grid";
                 this.generateSelectorHTML(this.typeSpecificData.selectableNames);
             } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
-                this.div.innerHTML = this.state;
-                this.div.style.overflow = "scroll";
+                this.textContainer.style.display = "block";
+                this.textContainer.innerHTML = this.state;
+                console.log("hi");
+            } else if (type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
+                this.setColor("red");
             } else if (type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
                 this.setStreamURL(this.typeSpecificData.streamURL);
             }
             this.type = type;
-            if (type !== Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) { // Because of aysnchronous functions that may run while this function is running, this code cannot be called at the top of the function (the text container may simply be populated again)
-                this.textContainer.innerHTML = "";
-            }
         }
-        setName(name) {
-            this.name = name;
-        }
+
         setId(id) {
             if (id == null || id == "undefined" || id == "") {
                 id = `${this.type.replace(" ", "_")}_${this.arrayIndex}`;
             }
             this.div.id = id;
             this.id = id;
+            if (Whiteboard.editingMode) this.div.title = `ID: ${this.id}`;
         }
-        setColor(color) {
-            this.color = color;
-            this.div.style.background = color;
-        }
+
         setStreamURL(url) {
             this.typeSpecificData.streamURL = url;
             this.stream.url = url;
         }
+
         updateIndex(index) {
             this.arrayIndex = index;
             this.div.setAttribute("index", index);
         }
+
         delete() {
             var temp = [];
             var updatedIndex = 0;
@@ -264,6 +272,7 @@ var Whiteboard = {
             Whiteboard.draggables = temp;
             this.div.parentElement.remove();
         }
+
         getShallowCopy() {
             let object = {};
             object.name = this.name;
@@ -287,7 +296,7 @@ var Whiteboard = {
         if (Whiteboard.editingMode) Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable("", new Positioning.Vector2d(100, 100), new Positioning.Vector2d(100, 100), "#0098cb", "button", null));
     },
 
-    duplicate: function (draggable, keepPosition=false) {
+    duplicate: function (draggable, keepPosition = false) {
         let position = new Positioning.Vector2d(0, 0);
         if (keepPosition) {
             position = draggable.position;
@@ -301,9 +310,9 @@ var Whiteboard = {
         Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable(name, position, draggable.size, draggable.color, draggable.type, draggable.id));
     },
 
-
+    // #region undo/redo functionality
     logChange: function () {
-        Socket.sendState();
+        Socket.sendLayout();
         let state = new Whiteboard.WhiteboardState();
         if (Whiteboard.States.stateIndex != Whiteboard.States.timeline.length) {
             Whiteboard.States.timeline = Whiteboard.States.timeline.slice(0, Whiteboard.States.stateIndex); // If the state index is not at the very end of the timeline, the user must have undone some tasks.  It doesn't make sense to keep those tasks as part of the timeline (they technically don't exist, because they have been undone), so they are deleted.
@@ -313,18 +322,18 @@ var Whiteboard = {
         Whiteboard.States.stateIndex += 1;
     },
 
-    States:  {
+    States: {
         timeline: [],
         stateIndex: 0,
         endState: null,
-        clearTimeline: function() {
+        clearTimeline: function () {
             Whiteboard.States.timeline = [];
             Whiteboard.States.stateIndex = 0;
             Whiteboard.States.endState = null;
         }
     },
 
-    WhiteboardState: class { //for the undo/redo functionality
+    WhiteboardState: class {
 
         constructor() {
             this.state = Load.getLayoutJSONString();
@@ -342,10 +351,6 @@ var Whiteboard = {
             }
         }
         return null;
-    },
-
-    handleStateEquality: function () {
-
     },
 
     undoChange: function () {
@@ -376,13 +381,14 @@ var Whiteboard = {
             if (Whiteboard.States.timeline[Whiteboard.States.stateIndex].state == Load.getLayoutJSONString() && Whiteboard.States.timeline.length > Whiteboard.States.stateIndex) {
                 Whiteboard.States.stateIndex += 1;
             }
-        } catch {} 
+        } catch { }
         if (Whiteboard.States.stateIndex == Whiteboard.States.timeline.length) {
             if (Whiteboard.States.endState != null) Whiteboard.States.endState.restore();
         } else {
             Whiteboard.States.timeline[Whiteboard.States.stateIndex].restore();
-        }        
+        }
     },
+    // #endregion
 
     toggleEditingMode: function () {
         var editingToggle = document.getElementById("editingToggle");
@@ -394,13 +400,13 @@ var Whiteboard = {
             editingToggle.innerHTML = "turn on editing mode";
             Array.from(labels).forEach((label) => label.readOnly = true);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "none");
-            this.draggables.forEach((draggable) => {draggable.div.title = ""});
+            this.draggables.forEach((draggable) => { draggable.div.title = "" });
         } else {
             border.style.display = "block";
             editingToggle.innerHTML = "turn off editing mode";
             Array.from(labels).forEach((label) => label.readOnly = false);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "block");
-            this.draggables.forEach((draggable) => {draggable.div.title = `ID: ${draggable.id}`});
+            this.draggables.forEach((draggable) => { draggable.div.title = `ID: ${draggable.id}` });
         }
         Whiteboard.editingMode = !Whiteboard.editingMode;
     },
@@ -409,10 +415,6 @@ var Whiteboard = {
     dragOffset: null,
     currentDraggable: null,
     editingMode: false,
-
-    redoableStates: [],
-    undoableStates: [],
-
 };
 
 window.Whiteboard = Whiteboard || {};

@@ -4,7 +4,8 @@
 <head>
     <title>Web Dashboard</title>
     <link rel="icon" type="image/x-icon" href="./images/Logo.png">
-    <link rel="stylesheet" href="./stylesheets/main.css">
+    <link rel="stylesheet" href="./style/whiteboard.css">
+    <link rel="stylesheet" href="./style/main.css">
     <script type="text/javascript" src="./javascript/utils/settings.js"></script>
     <script type="text/javascript" src="./javascript/utils/socket.js"></script>
     <script type="text/javascript" src="./javascript/utils/load.js"></script>
@@ -20,21 +21,28 @@
 <body onload="initialize()">
     <div id="banner-container">
         <img src="./team/banner.svg" id="banner"></img>
-    </div>    
+    </div>
     <div id="menu">
-        <div id="layout-name-container"><p id="layout-name" class="default-text">default layout</p></div>
+        <div id="layout-name-container">
+            <p id="layout-name" class="default-text">default layout</p>
+        </div>
         <div id="menu-button-wrapper">
             <div class="dropdown">
                 <button class="dropdown-button">File</button>
                 <div class="dropdown-container">
-                    <a class="dropdown-option">customize layout</a>
+                    <a class="dropdown-option" onclick="Load.newLayout()">new layout</a>
                     <a class="dropdown-option" onclick="Load.defaultSave()">save layout</a>
-                    <a class="dropdown-option" popup="Load-layout-as" title="Note that since this program uses local storage, data will not carry over to a different browser.  Your settings will not be saved in Firefox if you created them in Chrome!">save layout as</a>
+                    <a class="dropdown-option" popup="Load-layout-as"
+                        title="Note that since this program uses local storage, data will not carry over to a different browser.  Your settings will not be saved in Firefox if you created them in Chrome!">save
+                        layout as</a>
                     <a class="dropdown-option" onclick="Load.displayLayouts()" popup="open-layout">open layout</a>
-                    <a class="dropdown-option" onclick="Load.exportJSON(`webdashboard-layout:${Load.currentLayout}`)">export json</a>
+                    <a class="dropdown-option"
+                        onclick="Load.exportJSON(`webdashboard-layout:${Load.currentLayout}`)">export json</a>
                     <a class="dropdown-option" popup="json-importer">import json</a>
-                    <a class="dropdown-option not-default" onclick="Load.setAsDefault(`webdashboard-layout:${Load.currentLayout}`)">set as default</a>
-                    <a class="dropdown-option not-default" popup="remove-layout" onclick="Load.targetLayout = Load.currentLayout">delete layout</a>
+                    <a class="dropdown-option not-default"
+                        onclick="Load.setAsDefault(`webdashboard-layout:${Load.currentLayout}`)">set as default</a>
+                    <a class="dropdown-option not-default" popup="remove-layout"
+                        onclick="Load.targetLayout = Load.currentLayout">delete layout</a>
                     <a class="dropdown-option" popup="clear-storage">clear storage</a>
                 </div>
             </div>
@@ -45,7 +53,8 @@
                     <a class="dropdown-option edit-mode-only" onclick="Whiteboard.redoChange()">Redo</a>
                     <a class="dropdown-option edit-mode-only" onclick="Load.clearLayout()">clear layout</a>
                     <a class="dropdown-option edit-mode-only" onclick="Whiteboard.addDefaultDraggable()">add element</a>
-                    <a class="dropdown-option" id="editingToggle" onclick="Whiteboard.toggleEditingMode()">turn on editing mode</a>
+                    <a class="dropdown-option" id="editingToggle" onclick="Whiteboard.toggleEditingMode()">turn on
+                        editing mode</a>
                 </div>
             </div>
             <div class="dropdown">
@@ -58,13 +67,16 @@
             <div id="transition"></div>
         </div>
     </div>
-    <div id="status-container"><p id="status" class="default-text">disconnected</p></div>
+    <div id="status-container">
+        <p id="status" class="default-text">disconnected</p>
+    </div>
     <div id="whiteboard">
         <div id="whiteboard-border"></div>
     </div>
     <div id="popup-background"></div>
 
-    <div id="settings" class="popup" onthing="WhiteboardSettings.populateSettingsInfo()" style="width: 1000px; height: 750px">
+    <div id="settings" class="popup" onthing="WhiteboardSettings.populateSettingsInfo()"
+        style="width: 1000px; height: 750px">
         <a class="popup-onopen" onclick="WhiteboardSettings.populateSettingsInfo()"></a>
         <div class="absolute-centered-wrapper">
             <div id="websocket-info-wrapper"></div>
@@ -73,20 +85,21 @@
         </div>
         <button class="apply" onclick="WhiteboardSettings.saveSettings(event)">apply</button>
     </div>
-    <div id="open-layout" class="popup" style="width: 300px; height: 200px">     
+    <div id="open-layout" class="popup" style="width: 300px; height: 200px">
         <div class="list-container" id="select-json-container"></div>
     </div>
     <div id="clear-storage" class="popup" style="width: 350px; height: 200px">
         <div class="prompt-container">
-            <p class="prompt">Are you sure you want to delete all layouts?  This action cannot be undone.</p>
+            <p class="prompt">Are you sure you want to delete all layouts? This action cannot be undone.</p>
         </div>
         <button class="apply" onclick="Load.removeAllLayouts(event)">Do it!</button>
     </div>
     <div id="remove-layout" class="popup" style="width: 350px; height: 200px" targetLayout="">
         <div class="prompt-container">
-            <p class="prompt">Are you sure you want to delete this layout?  This action cannot be undone.</p>
+            <p class="prompt">Are you sure you want to delete this layout? This action cannot be undone.</p>
         </div>
-        <button class="apply" onclick="Load.safeDelete(event, `webdashboard-layout:${Load.targetLayout}`)">Do it!</button>
+        <button class="apply" onclick="Load.safeDelete(event, `webdashboard-layout:${Load.targetLayout}`)">Do
+            it!</button>
     </div>
     <div id="type-setter" class="popup" style="width: 300px; height: 250px">
         <div class="list-container" id="select-type-container"></div>
@@ -107,4 +120,5 @@
     </div>
 
 </body>
+
 </html>

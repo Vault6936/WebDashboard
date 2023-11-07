@@ -20,6 +20,7 @@ body {
     top: 0%;
     transition: top 2s ease;
 }
+
 #banner {
     position: relative;
     left: 50%;
@@ -31,7 +32,7 @@ body {
 
 .default-text {
     font-family: Roboto;
-    font-size: 15px; 
+    font-size: 15px;
     color: #0098cb;
 }
 
@@ -120,41 +121,6 @@ body {
     background-image: linear-gradient(to right, white, #0098cb);
     width: 100%;
     height: 100%;
-}
-
-.whiteboard-draggable {
-    z-index: 1;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100px;
-    height: 100px;
-    display: inline-block;
-    padding: 5px;
-    box-sizing: border-box;
-    overflow: scroll;
-    font-family: Roboto;
-    font-size: 15px;
-}
-
-.whiteboard-label {
-    font-family: Roboto;
-    text-align: center;
-    position: absolute;
-    margin: auto;
-    width: 75px;
-    height: 20px;
-    border: 3px solid black;
-}
-
-#whiteboard {
-    position: fixed;
-    left: 0px;
-    bottom: 0px;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background-color: white;
 }
 
 #popup-background {
@@ -273,7 +239,7 @@ body {
 
 .input-label {
     font-family: Roboto;
-    font-size: 15px; 
+    font-size: 15px;
     text-align: center;
     color: #0098cb;
 }
@@ -313,7 +279,7 @@ body {
     height: min-content;
 }
 
-#select-type-container {    
+#select-type-container {
     position: absolute;
     right: 0px;
     left: 0px;
@@ -348,7 +314,8 @@ body {
     color: #0098cb;
     text-align: center;
     cursor: pointer;
-    user-select: none; /* I love the irony :) */
+    user-select: none;
+    /* I love the irony :) */
     overflow: ellipsis;
 }
 
@@ -361,27 +328,6 @@ body {
 .default-selectable-selected {
     background-color: #0098cb;
     color: white;
-}
-
-.draggable-unselect {
-    background-color: white;
-    color: #0098cb;
-    text-align: center;
-}
-
-.draggable-select {
-    background-color: #0098cb;
-    color: white;
-}
-
-.draggable-selectable-container {
-    display: grid;
-    grid-template-columns: 100%;
-    grid-template-rows: repeat(auto-fill, min-content);
-    max-height: calc(100% - 50px);
-    overflow-x: hidden;
-    overflow-y: scroll;
-    background-color: white;
 }
 
 .layout-selectable {
@@ -433,7 +379,6 @@ body {
     padding-left: 15px;
     background-color: #0098cb;
 }
-
 
 #layout-name {
     font-size: 15px;
@@ -498,7 +443,6 @@ body {
     padding-left: 15px;
     background-color: red;
 }
-
 
 #status {
     font-size: 15px;

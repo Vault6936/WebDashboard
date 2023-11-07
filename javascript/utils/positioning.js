@@ -1,12 +1,12 @@
 var Positioning = {
-    clamp : function (value, min, max) {
+    clamp: function (value, min, max) {
         return Math.min(max, Math.max(min, value))
     },
     toHTMLPositionPX: function (value) {
         return value + "px";
     },
     Vector2d: class {
-        constructor(x ,y) {
+        constructor(x, y) {
             this.x = x;
             this.y = y;
         }

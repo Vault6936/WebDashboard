@@ -7,21 +7,21 @@ var Popup = {
             popup.children[i].style.opacity = 0;
         }
 
-        let animation = [{width: "0px", height: "0px"}, {width: popup.style.width, height: popup.style.height}];
-        let timing = {duration: 300, iterations: 1};
+        let animation = [{ width: "0px", height: "0px" }, { width: popup.style.width, height: popup.style.height }];
+        let timing = { duration: 300, iterations: 1 };
 
-        popup.animate(animation, timing).finished.then(() => {        
+        popup.animate(animation, timing).finished.then(() => {
             for (let i = 0; i < popup.children.length; i++) {
                 popup.children[i].style.opacity = 1.0;
             }
         });
-        
+
         popup.setAttribute("z-index", "1");
         popupBackground.style.display = "block";
         popupBackground.setAttribute("z-index", "0");
 
         let onopen = document.getElementsByClassName("popup-onopen")[0];
-        if (onopen != undefined) onopen.click(); 
+        if (onopen != undefined) onopen.click();
     },
 
     closePopupByCloser: function (target) {
@@ -29,13 +29,10 @@ var Popup = {
     },
 
     closePopup: function (popup) {
-        let animation = [{width: popup.style.width, height: popup.style.height}, {width: "0px", height: "0px"}];
-        let timing = {duration: 300, iterations: 1};
-
+        let animation = [{ width: popup.style.width, height: popup.style.height }, { width: "0px", height: "0px" }];
+        let timing = { duration: 300, iterations: 1 };
         popup.animate(animation, timing).finished.then(() => popup.style.display = "none");
-
         popupBackground.style.display = "none";
-
         for (let i = 0; i < popup.children.length; i++) {
             popup.children[i].style.opacity = 0;
         }
@@ -46,7 +43,7 @@ var Popup = {
         height = parseFloat(height);
         element.style.width = width + "px";
         element.style.height = height + "px";
-    
+
     },
 
     generateSimpleInputPopup: function (popupName, onApply, input) {
@@ -59,7 +56,7 @@ var Popup = {
         let inputContainer = document.createElement("div");
         inputContainer.setAttribute("class", "absolute-centered-wrapper");
         div.appendChild(inputContainer);
-        
+
         input.generateHTML(inputContainer);
 
         let apply = document.createElement("button");
@@ -69,11 +66,11 @@ var Popup = {
         div.appendChild(apply);
 
         document.body.appendChild(div);
-    
-        return div;    
+
+        return div;
     },
 
-    populatePopupClickableList: function (container, iterables, getName, getOnclick, unselectedStyle, selectedStyle, isSelectable=false) {
+    populatePopupClickableList: function (container, iterables, getName, getOnclick, unselectedStyle, selectedStyle, isSelectable = false) {
         let group = new Popup.SelectableGroup();
         for (let i = 0; i < iterables.length; i++) {
             let selectable = new Popup.Selectable(getName(iterables[i], i), getOnclick(iterables[i], i), unselectedStyle, selectedStyle, isSelectable);
@@ -86,9 +83,9 @@ var Popup = {
         constructor(name, onclick, unselectedStyle, selectedStyle, isSelectable) {
             this.group = null;
             this.name = name;
-            this.unselectedStyle = (unselectedStyle == undefined ?  "default-selectable" : unselectedStyle);
-            this.selectedStyle = (selectedStyle == undefined ?  "default-selectable-selected" : selectedStyle);
-            this.anchor = document.createElement("a");  
+            this.unselectedStyle = (unselectedStyle == undefined ? "default-selectable" : unselectedStyle);
+            this.selectedStyle = (selectedStyle == undefined ? "default-selectable-selected" : selectedStyle);
+            this.anchor = document.createElement("a");
             this.anchor.setAttribute("class", this.unselectedStyle);
             this.anchor.classList.add("selectable");
             this.anchor.innerHTML = name;
@@ -99,7 +96,7 @@ var Popup = {
                 try {
                     onclick();
                 } catch (e) {
-                    console.error(e);
+                    console.log(e);
                 }
             }.bind(this);
             this.isSelectable = isSelectable;
@@ -118,10 +115,10 @@ var Popup = {
             selectable.anchor.classList.add(selectable.selectedStyle);
         }
         add(...selectableItems) {
-            selectableItems.forEach((selectable) => {this.selectables.push(selectable); selectable.group = this;});
+            selectableItems.forEach((selectable) => { this.selectables.push(selectable); selectable.group = this; });
         }
-        generateHTML(parent) {            
-            this.selectables.forEach((selectable) => parent.appendChild(selectable.anchor));        
+        generateHTML(parent) {
+            this.selectables.forEach((selectable) => parent.appendChild(selectable.anchor));
         }
     },
 
@@ -160,17 +157,17 @@ var Popup = {
             let cls = document.createElement("img");
             cls.setAttribute("class", "close");
             cls.setAttribute("src", "./images/close.svg");
-            cls.addEventListener("click", () => {Popup.closePopup(Popup.getPopupFromChild(cls))});
+            cls.addEventListener("click", () => { Popup.closePopup(Popup.getPopupFromChild(cls)) });
             popups[i].appendChild(cls);
         }
         let inputs = document.getElementsByClassName("popup-input");
         for (let i = 0; i < inputs.length; i++) {
-            inputs[i].addEventListener("keydown", (event) => {if (event.key === "Enter" && document.activeElement === inputs[i]) Popup.getPopupFromChild(event.target).getElementsByClassName("apply")[0].click()});
+            inputs[i].addEventListener("keydown", (event) => { if (event.key === "Enter" && document.activeElement === inputs[i]) Popup.getPopupFromChild(event.target).getElementsByClassName("apply")[0].click() });
         }
         popupBackground = document.getElementById("popup-background");
         popupOpeners = document.querySelectorAll("[popup]"); //grabs all elements with a popup attribute
         for (let i = 0; i < popupOpeners.length; i++) {
-            popupOpeners[i].addEventListener("click", () => {Popup.openPopup(popupOpeners[i].getAttribute("popup"))})
+            popupOpeners[i].addEventListener("click", () => { Popup.openPopup(popupOpeners[i].getAttribute("popup")) })
         }
     },
 

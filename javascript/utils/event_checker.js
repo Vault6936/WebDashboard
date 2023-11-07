@@ -23,10 +23,10 @@ var CustomEventChecker = {
             this.target.dispatchEvent(this.event);
         }
     },
-    
+
     eventCheckers: [],
 
-    addEventChecker: function(checker) {
+    addEventChecker: function (checker) {
         CustomEventChecker.eventCheckers.push(checker);
     },
 };

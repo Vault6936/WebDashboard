@@ -6,21 +6,21 @@ import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
 
+
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import javax.json.stream.JsonParser;
 import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
+
 
 public class WebdashboardServer extends WebSocketServer {
 
-    ArrayList<HashMap<WebSocket, String>> lastLayoutStates;
+    ArrayList<DashboardLayout> layouts = new ArrayList<>();
 
     private static WebdashboardServer instance = null;
 
@@ -32,26 +32,29 @@ public class WebdashboardServer extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-
+        layouts.add(new DashboardLayout(conn));
     }
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        System.out.println(conn.getRemoteSocketAddress().getAddress().getHostAddress() + " ended the websocket connection");
+        layouts.removeIf(layout -> Objects.equals(conn, layout.socket));
     }
 
     @Override
     public void onMessage(WebSocket conn, String message) {
         if (Objects.equals(message, "ping")) {
             conn.send("pong");
-            return;
-        }
-        JsonReader reader = Json.createReader(new StringReader(message));
-        JsonObject object = reader.readObject();
-        if (Objects.equals(object.getString("messageType", ""), "layout state")) {
-            System.out.println("got a layout state message");
-        }
+        } else {
+            JsonReader reader = Json.createReader(new StringReader(message));
+            JsonObject object = reader.readObject().getJsonObject("message");
 
+            if (Objects.equals(object.getString("messageType"), "layout state")) {
+                if (!layouts.isEmpty()) {
+                    layouts.get(0).update(object);
+                    System.out.println(layouts.get(0).getSelectedValue("selectable_node"));
+                }
+            }
+        }
     }
 
     @Override
@@ -65,7 +68,7 @@ public class WebdashboardServer extends WebSocketServer {
     @Override
     public void onStart() {
         System.out.println("Server started");
-        setConnectionLostTimeout(1);
+        setConnectionLostTimeout(3);
     }
 
     public static WebdashboardServer getInstance(int port) {
