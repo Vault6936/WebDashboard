@@ -1,4 +1,4 @@
-![banner](https://github.com/Vault6936/WebDashboard/assets/71229731/49898106-efdd-4f62-831d-4087eef7cc0e)
+<img src="https://github.com/Vault6936/WebDashboard/blob/main/team/banner.svg"></img>
 
 Webdashboard is a browser-based dashboard for use in FIRST Robotics Competition (FRC).  Dashboard layouts can be edited within browsers, saved to a browser's local storage, or transferred to other browsers with JSON.  
 
@@ -17,7 +17,7 @@ Since this project uses only HTML, CSS, and vanilla JavaScript, you can simply d
 # Usage
 When you first open the index page, you should see a blank layout:
 
-![example1](https://github.com/Vault6936/WebDashboard/assets/71229731/75c72527-5c67-4f80-b22f-8b1b5d70bd24)
+<img src="https://github.com/Vault6936/WebDashboard/blob/main/samples/images/example1.png"></img>
 
 To begin creating your own layout, go to edit>turn on editing mode.  You will then have options to add nodes and edit them.
 
