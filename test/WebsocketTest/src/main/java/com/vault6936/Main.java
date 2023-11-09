@@ -8,10 +8,7 @@ public class Main {
         System.out.println("Websocket server initialized");
         int i = 0;
         while (true) {
-            DashboardLayout.setNodeValue("orange", "WE ALL LIVE IN A GREEN SUBMARINE.  IT USED TO BE YELLOW BUT WE PAINTED IT GREEN.  WE'VE BEEN LIVING IN THE SUBMARINE FOR " + i + " DAYS AND WE EAT SUBS NOMMMY NOM NOM NOM HAMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMmm");
-            //DashboardLayout.setNodeValue("selectable_node", "left auton");
-            DashboardLayout.setNodeValue("indigo", false);
-            DashboardLayout.setNodeValue("blue", true);
+            DashboardLayout.setNodeValue("orange", "counter: " + i);
             i++;
             Thread.sleep(1000);
         }

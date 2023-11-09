@@ -3,12 +3,15 @@ package com.vault6936;
 import javax.json.*;
 import org.java_websocket.WebSocket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
 public class DashboardLayout {
 
     public ArrayList<DashboardNode> nodes;
     public final WebSocket socket;
+
+    private final HashMap<String, Runnable> callbacks = new HashMap<>();
 
     public DashboardLayout(WebSocket socket) {
         this.socket = socket;
@@ -22,6 +25,17 @@ public class DashboardLayout {
             nodes.add(new DashboardNode(node.getString("id"), getNodeType(node.getString("type")), String.valueOf(node.get("state"))));
         }
         this.nodes = nodes;
+    }
+
+    public void updateNode(JsonObject object) {
+        JsonObject configuration = object.getJsonObject("configuration");
+        String nodeID = configuration.getString("id");
+        for (DashboardNode node : nodes) {
+            if (Objects.equals(node.id, nodeID)) {
+                node.state = configuration.getString("state");
+                return;
+            }
+        }
     }
 
     private static DashboardNode.Type getNodeType(String inputType) {
@@ -72,11 +86,23 @@ public class DashboardLayout {
         setNodeValue(id, String.valueOf(value));
     }
 
+    public void buttonClicked(String id) {
+        try {
+            callbacks.get(id).run();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addCallback(String buttonName, Runnable callback) {
+        callbacks.put(buttonName, callback);
+    }
+
     public static class DashboardNode {
 
         private final String id;
         private final Type type;
-        private final String state;
+        private String state;
 
         public DashboardNode(String id, Type type, String state) {
             this.id = id;

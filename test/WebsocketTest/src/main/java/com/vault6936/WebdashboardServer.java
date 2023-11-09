@@ -8,7 +8,6 @@ import org.java_websocket.server.WebSocketServer;
 
 
 import javax.json.Json;
-import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.StringReader;
@@ -40,19 +39,37 @@ public class WebdashboardServer extends WebSocketServer {
         layouts.removeIf(layout -> Objects.equals(conn, layout.socket));
     }
 
+    private DashboardLayout getLayout(WebSocket conn) {
+        for (DashboardLayout layout : layouts) {
+            if (layout.socket == conn) { // In this case the Objects.equals() method is not ideal.  What's important is that the references are the same, not the values of the variables
+                return layout;
+            }
+        }
+        return null;
+    }
+
     @Override
     public void onMessage(WebSocket conn, String message) {
         if (Objects.equals(message, "ping")) {
             conn.send("pong");
         } else {
+            DashboardLayout layout = getLayout(conn);
+            assert layout != null;
+
             JsonReader reader = Json.createReader(new StringReader(message));
             JsonObject object = reader.readObject().getJsonObject("message");
 
             if (Objects.equals(object.getString("messageType"), "layout state")) {
                 if (!layouts.isEmpty()) {
-                    layouts.get(0).update(object);
-                    System.out.println(layouts.get(0).getSelectedValue("selectable_node"));
+                    layout.update(object);
                 }
+            } else if (Objects.equals(object.getString("messageType"), "node update")) {
+                layout.updateNode(object);
+                System.out.println("boolean value: " + layout.getBooleanValue("violet"));
+                System.out.println("selected value: " + layout.getSelectedValue("indigo"));
+            } else if (Objects.equals(object.getString("messageType"), "click")) {
+                layout.addCallback("green", () -> {System.out.println("I've been clicked!");});
+                layout.buttonClicked(object.getString("nodeID"));
             }
         }
     }

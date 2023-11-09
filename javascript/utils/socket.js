@@ -4,11 +4,13 @@ var Socket = {
     clientID: Date.now(),
     lastMessageTimestamp: 0,
     connecting: false,
+    connected: false,
 
     initializeSocket: function () {
         setInterval(() => { try { Socket.websocket.send("ping") } catch { } }, 10000);
         CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("disconnected", Socket.disconnected, window));
         addEventListener("disconnected", () => {
+            Socket.connected = false;
             document.getElementById("status-container").style.backgroundColor = "red";
             document.getElementById("status").innerHTML = "disconnected";
             if (!Socket.connecting) Socket.openSocket(0);
@@ -22,10 +24,14 @@ var Socket = {
         data.message.clientID = Socket.clientID;
         data.message.messageType = "layout state";
         data = JSON.stringify(data);
+        Socket.sendData(data);
+    },
+
+    sendData: function (data) {
         try {
             Socket.websocket.send(data);
         } catch {
-            Notify.createNotice("Could not properly connect to Rio", "negative", 5000);
+            if (Socket.connected) Notify.createNotice("Could not properly connect to Rio", "negative", 5000);
         }
     },
 
@@ -41,6 +47,7 @@ var Socket = {
         }
         Socket.websocket.onopen = () => {
             Socket.connecting = false;
+            Socket.connected = true;
             Notify.createNotice("Connected to the RoboRio!", "positive", 8000);
             document.getElementById("status-container").style.backgroundColor = "limegreen";
             document.getElementById("status").innerHTML = "connected";
@@ -64,9 +71,8 @@ var Socket = {
             try {
                 data = JSON.parse(data);
                 Whiteboard.getDraggableById(data.nodeID).setState(data.state);
-
-            } catch (err) {
-                console.warn(err);
+            } catch {
+                console.warn(`The server attemped to set the state of a node with id "${data.nodeID}," which does not exist.`);
                 Notify.createNotice("Received invalid message from the RoboRio", "negative", 3000);
             }
         }

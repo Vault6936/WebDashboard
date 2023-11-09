@@ -18,7 +18,7 @@ body {
     height: 100%;
     z-index: 200;
     top: 0%;
-    transition: top 2s ease;
+    transition: top 3.5s ease;
 }
 
 #banner {

@@ -53,7 +53,7 @@ var Load = {
 
     getLayoutJSONString: function () {
         let data = {};
-        let draggableData = Whiteboard.draggables;
+        let draggableData = Whiteboard.draggableRegistry;
         data.draggableData = draggableData;
         let border = document.getElementById("whiteboard-border");
         data.border = { "width": border.style.width, "height": border.style.height };
@@ -69,8 +69,8 @@ var Load = {
 
     saveJSON: function (event) {
         let popup = Popup.getPopupFromChild(event.target);
-        for (let i = 0; i < Whiteboard.draggables.length; i++) {
-            Load.getDraggableName(Whiteboard.draggables[i]);
+        for (let i = 0; i < Whiteboard.draggableRegistry.length; i++) {
+            Load.getDraggableName(Whiteboard.draggableRegistry[i]);
         }
         let name = popup.getElementsByClassName("popup-input")[0].value;
         Load.updateCurrentLayout(name);
@@ -80,8 +80,8 @@ var Load = {
     },
 
     defaultSave: function (notify = true) {
-        for (let i = 0; i < Whiteboard.draggables.length; i++) {
-            Load.getDraggableName(Whiteboard.draggables[i]);
+        for (let i = 0; i < Whiteboard.draggableRegistry.length; i++) {
+            Load.getDraggableName(Whiteboard.draggableRegistry[i]);
         }
         localStorage.setItem(`webdashboard-layout:${Load.currentLayout}`, Load.getLayoutJSONString());
         if (notify) Notify.createNotice("Layout saved!", "positive", 3000);
@@ -121,7 +121,7 @@ var Load = {
     getLayoutJSON: function () {
         let data = {};
         let draggableData = [];
-        Whiteboard.draggables.forEach((draggable) => draggableData.push(draggable.getShallowCopy()));
+        Whiteboard.draggableRegistry.forEach((draggable) => draggableData.push(draggable.getShallowCopy()));
         data.draggableData = draggableData;
         let border = document.getElementById("whiteboard-border");
         data.border = { "width": border.style.width, "height": border.style.height };
@@ -177,11 +177,12 @@ var Load = {
             let position = new Positioning.Vector2d(json.draggableData[i].position.x, json.draggableData[i].position.y);
             let size = json.draggableData[i].size;
             let color = json.draggableData[i].color;
+            let layer = json.draggableData[i].layer;
             let type = json.draggableData[i].type;
             let id = json.draggableData[i].id;
             let state = json.draggableData[i].state;
             let typeSpecificData = json.draggableData[i].typeSpecificData;
-            Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable(name, position, size, color, type, id, state, typeSpecificData));
+            Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(name, position, size, color, layer, type, id, state, typeSpecificData));
         }
     },
 
@@ -237,9 +238,9 @@ var Load = {
 
     clearLayout: function (logChange = true) {
         if (logChange) Whiteboard.logChange();
-        iterations = Whiteboard.draggables.length; //must be set here, because calling delete() continually updates Draggable.draggables.length
+        iterations = Whiteboard.draggableRegistry.length; //must be set here, because calling delete() continually updates Draggable.draggableRegistry.length
         for (let i = 0; i < iterations; i++) {
-            Whiteboard.draggables[0].delete(); //Every time delete() is called, a new draggable will fall into the 0 slot in the array
+            Whiteboard.draggableRegistry[0].delete(); //Every time delete() is called, a new draggable will fall into the 0 slot in the array
         }
         let border = document.getElementById("whiteboard-border");
         border.style.removeProperty("width");

@@ -42,6 +42,7 @@ var PopupTasks = {
     },
 
     defineSelectables: function (event) {
+        Whiteboard.logChange();
         let popup = Popup.getPopupFromChild(event.target);
         let input = document.getElementById("draggable-selectable-field").value;
         try {
@@ -58,9 +59,21 @@ var PopupTasks = {
     },
 
     setStreamURL: function (event) {
+        Whiteboard.logChange();
         let popup = Popup.getPopupFromChild(event.target);
-        let url = popup.getElementsByClassName("popup-input")[0];
+        let url = popup.getElementsByClassName("popup-input")[0].value;
         Whiteboard.currentDraggable.setStreamURL(url);
+        Popup.closePopup(popup);
+    },
+
+    setStreamSize: function (event) {
+        Whiteboard.logChange();
+        let popup = Popup.getPopupFromChild(event.target);
+        let size = popup.getElementsByClassName("popup-input")[0].value;
+        size = size.split(/[Xx]/);
+        width = parseInt(size[0]);
+        height = parseInt(size[1]);
+        Whiteboard.currentDraggable.setStreamSize(new Positioning.Vector2d(width, height));
         Popup.closePopup(popup);
     },
 

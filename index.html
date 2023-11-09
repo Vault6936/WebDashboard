@@ -49,10 +49,10 @@
             <div class="dropdown">
                 <button class="dropdown-button">Edit</button>
                 <div class="dropdown-container">
-                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.undoChange()">Undo</a>
-                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.redoChange()">Redo</a>
+                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.undoChange()">undo</a>
+                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.redoChange()">redo</a>
                     <a class="dropdown-option edit-mode-only" onclick="Load.clearLayout()">clear layout</a>
-                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.addDefaultDraggable()">add element</a>
+                    <a class="dropdown-option edit-mode-only" onclick="Whiteboard.addDefaultDraggable()">add node</a>
                     <a class="dropdown-option" id="editingToggle" onclick="Whiteboard.toggleEditingMode()">turn on
                         editing mode</a>
                 </div>
@@ -75,8 +75,7 @@
     </div>
     <div id="popup-background"></div>
 
-    <div id="settings" class="popup" onthing="WhiteboardSettings.populateSettingsInfo()"
-        style="width: 1000px; height: 750px">
+    <div id="settings" class="popup" style="width: 500px; height: 300px">
         <a class="popup-onopen" onclick="WhiteboardSettings.populateSettingsInfo()"></a>
         <div class="absolute-centered-wrapper">
             <div id="websocket-info-wrapper"></div>

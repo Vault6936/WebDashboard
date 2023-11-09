@@ -17,10 +17,10 @@ var Popup = {
         });
 
         popup.setAttribute("z-index", "1");
-        popupBackground.style.display = "block";
-        popupBackground.setAttribute("z-index", "0");
+        Popup.popupBackground.style.display = "block";
+        Popup.popupBackground.setAttribute("z-index", "0");
 
-        let onopen = document.getElementsByClassName("popup-onopen")[0];
+        let onopen = popup.getElementsByClassName("popup-onopen")[0];
         if (onopen != undefined) onopen.click();
     },
 
@@ -32,7 +32,7 @@ var Popup = {
         let animation = [{ width: popup.style.width, height: popup.style.height }, { width: "0px", height: "0px" }];
         let timing = { duration: 300, iterations: 1 };
         popup.animate(animation, timing).finished.then(() => popup.style.display = "none");
-        popupBackground.style.display = "none";
+        Popup.popupBackground.style.display = "none";
         for (let i = 0; i < popup.children.length; i++) {
             popup.children[i].style.opacity = 0;
         }
@@ -151,6 +151,14 @@ var Popup = {
         }
     },
 
+    setOnOpen: function (id, onopen) {
+        let popup = document.getElementById(id);
+        let anchor = document.createElement("a");
+        anchor.onclick = onopen;
+        anchor.classList.add("popup-onopen");
+        popup.appendChild(anchor);
+    },
+
     initializePopups: function () {
         let popups = document.getElementsByClassName("popup");
         for (let i = 0; i < popups.length; i++) {
@@ -164,7 +172,7 @@ var Popup = {
         for (let i = 0; i < inputs.length; i++) {
             inputs[i].addEventListener("keydown", (event) => { if (event.key === "Enter" && document.activeElement === inputs[i]) Popup.getPopupFromChild(event.target).getElementsByClassName("apply")[0].click() });
         }
-        popupBackground = document.getElementById("popup-background");
+        Popup.popupBackground = document.getElementById("popup-background");
         popupOpeners = document.querySelectorAll("[popup]"); //grabs all elements with a popup attribute
         for (let i = 0; i < popupOpeners.length; i++) {
             popupOpeners[i].addEventListener("click", () => { Popup.openPopup(popupOpeners[i].getAttribute("popup")) })
@@ -195,6 +203,10 @@ var Popup = {
         }
     },
 
+    getInput: function (wrapperId) {
+        return document.getElementById(wrapperId).getElementsByClassName("popup-input")[0];
+    },
+
     getInputValue: function (wrapperId) {
         return document.getElementById(wrapperId).getElementsByClassName("popup-input")[0].value;
     },
@@ -202,6 +214,8 @@ var Popup = {
     setInputValue: function (wrapperId, value) {
         document.getElementById(wrapperId).getElementsByClassName("popup-input")[0].value = value;
     },
+
+    popupBackground: null,
 };
 
 Popup = Popup || {};

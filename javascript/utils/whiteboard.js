@@ -8,10 +8,20 @@ var Whiteboard = {
             SELECTOR: "selector",
             BOOLEAN_TELEMETRY: "boolean telemetry",
             TEXT_TELEMETRY: "text telemetry",
-            CAMERA_STREAM: "camera steam",
+            CAMERA_STREAM: "camera stream",
         };
 
-        constructor(name, position, size, color, type, id, state, typeSpecificData) {
+        name;
+        position;
+        size;
+        color;
+        layer;
+        type;
+        id;
+        state;
+        typeSpecificData;
+
+        constructor(name, position, size, color, layer, type, id, state, typeSpecificData) {
             this.bindMethods();
             this.whiteboard = document.getElementById("whiteboard");
 
@@ -24,39 +34,33 @@ var Whiteboard = {
             this.textContainer.classList.add("draggable-text-container");
             this.div.appendChild(this.textContainer);
             this.stream = document.createElement("img");
+            this.stream.setAttribute("draggable", false);
+            this.stream.classList.add("camera-stream");
             this.div.appendChild(this.stream);
             this.container = document.createElement("span");
             this.label = document.createElement("input");
             if (!Whiteboard.editingMode) this.label.readOnly = true;
             this.div.className = "whiteboard-draggable";
-            this.div.background = this.color;
             // #endregion 
 
             // #region declare class fields
             this.name = name;
             this.position = position;
-            this.size = size;
-            this.color = color;
-            this.type = null;
-            if (typeSpecificData != undefined) this.typeSpecificData = typeSpecificData; else this.typeSpecificData = {};
-            try {
-                this.typeSpecificData.selectableNames = typeSpecificData.selectableNames;
-            } catch {
-                this.typeSpecificData.selectableNames = [];
-            };
+            this.setColor(color);
+            this.setLayer(layer);
+            if (typeSpecificData == undefined) this.typeSpecificData = {}; else this.typeSpecificData = typeSpecificData;
+            this.setStreamSize(this.typeSpecificData.streamSize);
             this.selectableGroup = null;
             this.setType(type);
-            this.state = state;
-            this.setState(this.state);
+            this.setState(state);
             this.arrayIndex = 0;
-            this.updateIndex(Whiteboard.draggables.length);
-            this.id = null;
+            this.updateIndex(Whiteboard.draggableRegistry.length);
             this.setId(id);
             // #endregion
 
             // #region dragging functionality
             this.draggingDiv = false;
-            this.setSize(this.size);
+            this.setSize(size);
             this.div.onmousedown = function (event) {
                 if (Whiteboard.editingMode && event.button === 0) {
                     if (this.draggingDiv) {
@@ -100,9 +104,13 @@ var Whiteboard = {
             this.setPosition = this.setPosition.bind(this);
             this.setSize = this.setSize.bind(this);
             this.setColor = this.setColor.bind(this);
+            this.setLayer = this.setLayer.bind(this);
             this.setType = this.setType.bind(this);
             this.setId = this.setId.bind(this);
             this.setStreamURL = this.setStreamURL.bind(this);
+            this.setStreamSize = this.setStreamSize.bind(this);
+            this.setState = this.setState.bind(this);
+            this.sendState = this.sendState.bind(this);
             this.handleClick = this.handleClick.bind(this);
             this.generateSelectorHTML = this.generateSelectorHTML.bind(this);
             this.getShallowCopy = this.getShallowCopy.bind(this);
@@ -114,7 +122,7 @@ var Whiteboard = {
             this.selectorContainer.innerHTML = "";
             this.selectableGroup = new Popup.SelectableGroup();
             for (let i = 0; i < selectableNames.length; i++) {
-                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => { this.state = selectableNames[i]; Socket.sendLayout() }).bind(this), "draggable-unselect", "draggable-select", true));
+                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => { this.state = selectableNames[i]; this.sendState() }).bind(this), "draggable-unselect", "draggable-select", true));
             }
             this.selectableGroup.generateHTML(this.selectorContainer);
         }
@@ -123,11 +131,8 @@ var Whiteboard = {
             try {
                 this.state = state;
                 if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE || this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
-                    if (state === "true") this.state = true;
-                    if (state === "false") this.state = false;
-                }
-                if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE || this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
-                    if (this.state) {
+                    this.state = String(this.state);
+                    if (this.state == "true") {
                         this.setColor("limegreen");
                     } else {
                         this.setColor("red");
@@ -142,37 +147,48 @@ var Whiteboard = {
                             toSelect = this.selectableGroup.selectables[i];
                         }
                     }
-                    if (toSelect == null) return;
+                    if (toSelect == null) throw new Error("Selector node does not have requested state");
                     this.selectableGroup.select(toSelect);
                     this.state = toSelect.name;
                 }
-            } catch {
+            } catch (err) {
+                console.warn(err);
                 Notify.createNotice("Could not apply draggable state", "negative", 2000);
             }
+        }
+
+        sendState() {
+            let data = { message: {} };
+            data.message.configuration = {
+                id: this.id,
+                state: this.state,
+            };
+            data.message.clientID = Socket.clientID;
+            data.message.messageType = "node update";
+            data = JSON.stringify(data);
+            Socket.sendData(data);
         }
 
         handleClick() {
             if (!Whiteboard.editingMode) {
                 if (this.type == Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
-                    this.setState(!this.state);
+                    let state = "false";
+                    if (this.state == "false") state = true;
+                    this.setState(state);
+                    this.sendState();
                 }
-                if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON || this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
-                    try {
-                        let data = {};
-                        data["id"] = this.id;
-                        data["type"] = this.type;
-                        if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
-                            data["state"] = "click";
-                        } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
-                            data["state"] = this.state.toString();
-                        };
-                        Socket.sendLayout();
-                    } catch {
-                        console.warn("Unable to send data to RoboRio");
-                    }
+                if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
+                    data = { message: {} };
+                    data.message.nodeID = this.id;
+                    data.message.clientID = Socket.clientID;
+                    data.message.messageType = "click";
+                    data = JSON.stringify(data);
+                    Socket.sendData(data);
                 }
             }
         }
+
+
 
         mouseDrag() {
             this.setPosition(Positioning.mousePosition);
@@ -213,12 +229,34 @@ var Whiteboard = {
             this.div.style.background = color;
         }
 
+        setLayer(layer, arrangeOthers = true) {
+            layer = Positioning.clamp(layer, 0, Whiteboard.draggableRegistry.length);
+            this.div.style.zIndex = 1000 + 2 * layer;
+            this.label.style.zIndex = 1001 + 2 * layer;
+            if (this.layer != undefined && layer != this.layer && arrangeOthers) { // this.layer is equivalent to the prior draggable layer, and layer is equivalent to the new layer
+                Whiteboard.draggableRegistry.forEach((draggable) => {
+                    if (draggable.arrayIndex == this.arrayIndex) return; // The draggable should not be doing any extra operations on itself
+                    if (layer > this.layer) { // If the layer has been bumped up
+                        if (draggable.layer > this.layer && draggable.layer <= layer) { // If the draggable has been moved up from layer a to layer b, each layer after layer a and through layer b should be dropped down by one layer
+                            draggable.setLayer(draggable.layer - 1, false);
+                        }
+                    } else { // If the layer has been bumped down
+                        if (draggable.layer >= layer && draggable.layer < this.layer) { // If the draggable has been moved down from layer b to layer a, each layer from layer a until layer be should be moved up by one layer
+                            draggable.setLayer(draggable.layer + 1, false);
+                        }
+                    }
+                });
+            }
+            this.layer = layer;
+        }
+
         setType(type) {
             this.textContainer.style.display = "none";
             this.selectorContainer.innerHTML = "";
             this.selectorContainer.style.display = "none";
+            this.stream.style.display = "none";
             this.stream.src = "";
-            if (this.type != type) {
+            if (this.type != type && this.type != undefined) {
                 this.state = "";
             }
             if (type == undefined || type == null) {
@@ -235,9 +273,17 @@ var Whiteboard = {
             } else if (type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
                 this.setColor("red");
             } else if (type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
+                this.stream.style.display = "block";
                 this.setStreamURL(this.typeSpecificData.streamURL);
             }
             this.type = type;
+        }
+
+        setStreamSize(size) {
+            if (size == undefined) return;
+            this.typeSpecificData.streamSize = size;
+            this.stream.style.width = Positioning.toHTMLPositionPX(size.x);
+            this.stream.style.height = Positioning.toHTMLPositionPX(size.y);
         }
 
         setId(id) {
@@ -251,7 +297,7 @@ var Whiteboard = {
 
         setStreamURL(url) {
             this.typeSpecificData.streamURL = url;
-            this.stream.url = url;
+            this.stream.src = url;
         }
 
         updateIndex(index) {
@@ -262,14 +308,14 @@ var Whiteboard = {
         delete() {
             var temp = [];
             var updatedIndex = 0;
-            for (let i = 0; i < Whiteboard.draggables.length; i++) {
+            for (let i = 0; i < Whiteboard.draggableRegistry.length; i++) {
                 if (i != this.arrayIndex) {
-                    temp.push(Whiteboard.draggables[i]);
-                    Whiteboard.draggables[i].updateIndex(updatedIndex); // Resets the index variable of the draggable so the draggable can find itself in the new draggables array
+                    temp.push(Whiteboard.draggableRegistry[i]);
+                    Whiteboard.draggableRegistry[i].updateIndex(updatedIndex); // Resets the index variable of the draggable so the draggable can find itself in the new draggableRegistry array
                     updatedIndex++;
                 }
             }
-            Whiteboard.draggables = temp;
+            Whiteboard.draggableRegistry = temp;
             this.div.parentElement.remove();
         }
 
@@ -279,6 +325,7 @@ var Whiteboard = {
             object.position = this.position;
             object.size = this.size;
             object.color = this.color;
+            object.layer = this.layer;
             object.type = this.type;
             object.id = this.id;
             object.state = this.state;
@@ -293,7 +340,7 @@ var Whiteboard = {
 
     addDefaultDraggable: function () {
         Whiteboard.logChange();
-        if (Whiteboard.editingMode) Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable("", new Positioning.Vector2d(100, 100), new Positioning.Vector2d(100, 100), "#0098cb", "button", null));
+        if (Whiteboard.editingMode) Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable("", new Positioning.Vector2d(100, 100), new Positioning.Vector2d(100, 100), "#0098cb", Whiteboard.draggableRegistry.length, "button", null));
     },
 
     duplicate: function (draggable, keepPosition = false) {
@@ -307,7 +354,17 @@ var Whiteboard = {
         } catch {
             name = draggable.name;
         }
-        Whiteboard.draggables.push(new Whiteboard.WhiteboardDraggable(name, position, draggable.size, draggable.color, draggable.type, draggable.id));
+        Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(name, position, draggable.size, draggable.color, Whiteboard.draggableRegistry.length, draggable.type, null, null, draggable.typeSpecificData));
+    },
+
+    getDraggableAncestor: function (element, recursion) {
+        if (recursion == undefined) recursion = 0;
+        if (element == null || element.classList.contains("whiteboard-draggable")) {
+            return element;
+        } else if (recursion < 10) {
+            return Whiteboard.getDraggableAncestor(element.parentElement, recursion + 1);
+        }
+        return null;
     },
 
     // #region undo/redo functionality
@@ -345,9 +402,9 @@ var Whiteboard = {
     },
 
     getDraggableById: function (id) {
-        for (let i = 0; i < Whiteboard.draggables.length; i++) {
-            if (Whiteboard.draggables[i].id === id) {
-                return Whiteboard.draggables[i];
+        for (let i = 0; i < Whiteboard.draggableRegistry.length; i++) {
+            if (Whiteboard.draggableRegistry[i].id === id) {
+                return Whiteboard.draggableRegistry[i];
             }
         }
         return null;
@@ -400,18 +457,18 @@ var Whiteboard = {
             editingToggle.innerHTML = "turn on editing mode";
             Array.from(labels).forEach((label) => label.readOnly = true);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "none");
-            this.draggables.forEach((draggable) => { draggable.div.title = "" });
+            this.draggableRegistry.forEach((draggable) => { draggable.div.title = "" });
         } else {
             border.style.display = "block";
             editingToggle.innerHTML = "turn off editing mode";
             Array.from(labels).forEach((label) => label.readOnly = false);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "block");
-            this.draggables.forEach((draggable) => { draggable.div.title = `ID: ${draggable.id}` });
+            this.draggableRegistry.forEach((draggable) => { draggable.div.title = `ID: ${draggable.id}` });
         }
         Whiteboard.editingMode = !Whiteboard.editingMode;
     },
 
-    draggables: [],
+    draggableRegistry: [],
     dragOffset: null,
     currentDraggable: null,
     editingMode: false,

@@ -1,0 +1,170 @@
+{
+  "draggableData": [
+    {
+      "name": "red",
+      "position": {
+        "x": 25,
+        "y": 65
+      },
+      "size": {
+        "x": 200,
+        "y": 200
+      },
+      "color": "red",
+      "layer": 0,
+      "type": "button",
+      "id": "red",
+      "typeSpecificData": {
+        "selectableNames": []
+      }
+    },
+    {
+      "name": "orange",
+      "position": {
+        "x": 159,
+        "y": 433
+      },
+      "size": {
+        "x": 200,
+        "y": 200
+      },
+      "color": "orange",
+      "layer": 1,
+      "type": "text telemetry",
+      "id": "orange",
+      "state": "counter: 1048",
+      "typeSpecificData": {
+        "selectableNames": []
+      }
+    },
+    {
+      "name": "yellow",
+      "position": {
+        "x": 452,
+        "y": 150
+      },
+      "size": {
+        "x": 200,
+        "y": 200
+      },
+      "color": "yellow",
+      "layer": 2,
+      "type": "camera stream",
+      "id": "yellow",
+      "state": "",
+      "typeSpecificData": {
+        "selectableNames": [],
+        "streamURL": "https://cdn.freebiesupply.com/images/thumbs/2x/google-logo.png",
+        "streamSize": {
+          "x": 190,
+          "y": 143
+        }
+      }
+    },
+    {
+      "name": "green",
+      "position": {
+        "x": 836,
+        "y": 460
+      },
+      "size": {
+        "x": 200,
+        "y": 200
+      },
+      "color": "lightgreen",
+      "layer": 3,
+      "type": "button",
+      "id": "green",
+      "state": "",
+      "typeSpecificData": {
+        "selectableNames": [],
+        "streamURL": "https://cdn.freebiesupply.com/images/thumbs/2x/google-logo.png",
+        "streamSize": {
+          "x": 190,
+          "y": 143
+        }
+      }
+    },
+    {
+      "name": "blue",
+      "position": {
+        "x": 1361,
+        "y": 503
+      },
+      "size": {
+        "x": 200,
+        "y": 200
+      },
+      "color": "blue",
+      "layer": 4,
+      "type": "button",
+      "id": "blue",
+      "state": null,
+      "typeSpecificData": {
+        "selectableNames": [],
+        "streamURL": "https://cdn.freebiesupply.com/images/thumbs/2x/google-logo.png",
+        "streamSize": {
+          "x": 190,
+          "y": 143
+        }
+      }
+    },
+    {
+      "name": "indigo",
+      "position": {
+        "x": 1031,
+        "y": 147
+      },
+      "size": {
+        "x": 200,
+        "y": 200
+      },
+      "color": "indigo",
+      "layer": 5,
+      "type": "selector",
+      "id": "indigo",
+      "state": "middle auton",
+      "typeSpecificData": {
+        "selectableNames": [
+          "left auton",
+          "middle auton",
+          "right auton"
+        ],
+        "streamURL": "https://cdn.freebiesupply.com/images/thumbs/2x/google-logo.png",
+        "streamSize": {
+          "x": 190,
+          "y": 143
+        }
+      }
+    },
+    {
+      "name": "violet",
+      "position": {
+        "x": 565,
+        "y": 563
+      },
+      "size": {
+        "x": 200,
+        "y": 200
+      },
+      "color": "red",
+      "layer": 6,
+      "type": "toggle",
+      "id": "violet",
+      "state": "false",
+      "typeSpecificData": {
+        "selectableNames": [],
+        "streamURL": "https://cdn.freebiesupply.com/images/thumbs/2x/google-logo.png",
+        "streamSize": {
+          "x": 190,
+          "y": 143
+        }
+      }
+    }
+  ],
+  "border": {
+    "width": "",
+    "height": ""
+  },
+  "name": "default"
+}

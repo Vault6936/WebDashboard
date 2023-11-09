@@ -59,3 +59,7 @@
     overflow-y: scroll;
     background-color: white;
 }
+
+.camera-stream {
+    user-select: none;
+}
