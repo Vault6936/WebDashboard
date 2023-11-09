@@ -23,7 +23,7 @@ To begin creating your own layout, go to edit>turn on editing mode.  You will th
 
 If you wish to create a new layout, go to file>new layout.  You can rename any layout by going to file>open layout and right clicking on the layout you wish to rename.  Alternatively, if you want to view an example layout, copy a json in the samples directory and go to file>import json.
 
-The test directory contains a sample Java program with websocket server code and an API for pulling data from dashboard layouts.  To connect your dashboard to the websocket server, go to options>settings and verify that the websocket URl is correct.  The dashboard will automatically connect when it detects the websocket server. 
+The test directory contains a sample Java program with websocket server code and an API for pulling data from dashboard layouts.  To connect your dashboard to the websocket server, go to options>settings and verify that the websocket URL is correct.  The dashboard will automatically connect when it detects the websocket server. 
 
 # Contributing
 We would love to see how other teams can improve this project!  If you or your team is interested in contributing, simply create a pull request.  If you have any questions or suggestions that aren't suited for an issue, feel free to email us at vault6936programming@gmail.com. 
