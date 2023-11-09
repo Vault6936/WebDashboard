@@ -1,6 +1,5 @@
-# WebDashboard
-A web-based dashboard/control interface that uses websockets to communicate with the RoboRio.
-# Description
+![banner](https://github.com/Vault6936/WebDashboard/assets/71229731/49898106-efdd-4f62-831d-4087eef7cc0e)
+
 Webdashboard is a browser-based dashboard for use in FIRST Robotics Competition (FRC).  Dashboard layouts can be edited within browsers, saved to a browser's local storage, or transferred to other browsers with JSON.  
 
 This project first started during the 2023 Charged Up FRC season when Vault was exploring ways to make a custom payload controller interface.  Ultimately, we decided to use a touch-screen monitor to display a simple HTML dashboard.  While this was much less capable than Shuffleboard, it was also more aesthetically pleasing, more customizable, and less prone to error (If the dashboard crashes, just reload the page :D).  After our last competition, we began taking this project farther with the goal of making a better and faster alternative to Shuffleboard.
