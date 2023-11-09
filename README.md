@@ -21,7 +21,7 @@ When you first open the index page, you should see a blank layout:
 
 To begin creating your own layout, go to edit>turn on editing mode.  You will then have options to add nodes and edit them.
 
-If you wish to create a new layout, go to file>new layout.  You can rename any layout by going to file>open layout and right clicking on the layout you wish to rename.  Alternatively, if you want to view an example layout, copy a json in the samples directory and go to file>import json.
+If you wish to create a new layout, go to file>new layout.  You can rename any layout by going to file>open layout and right clicking on the layout you wish to rename.  Alternatively, if you want to view an example layout, copy a json file in the samples directory and go to file>import json.
 
 The test directory contains a sample Java program with websocket server code and an API for pulling data from dashboard layouts.  To connect your dashboard to the websocket server, go to options>settings and verify that the websocket URL is correct.  The dashboard will automatically connect when it detects the websocket server. 
 
