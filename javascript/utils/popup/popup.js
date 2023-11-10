@@ -29,6 +29,7 @@ var Popup = {
     },
 
     closePopup: function (popup) {
+        Popup.selected = null;
         let animation = [{ width: popup.style.width, height: popup.style.height }, { width: "0px", height: "0px" }];
         let timing = { duration: 300, iterations: 1 };
         popup.animate(animation, timing).finished.then(() => popup.style.display = "none");
@@ -83,8 +84,16 @@ var Popup = {
         constructor(name, onclick, unselectedStyle, selectedStyle, isSelectable) {
             this.group = null;
             this.name = name;
-            this.unselectedStyle = (unselectedStyle == undefined ? "default-selectable" : unselectedStyle);
-            this.selectedStyle = (selectedStyle == undefined ? "default-selectable-selected" : selectedStyle);
+            if (unselectedStyle == undefined) {
+                this.unselectedStyle = "default-selectable " + WhiteboardSettings.Themes.selectedTheme.defaultSelectable;
+            } else {
+                this.unselectedStyle = unselectedStyle;
+            }
+            if (selectedStyle == undefined) {
+                this.selectedStyle = "default-selectable-selected " + WhiteboardSettings.Themes.selectedTheme.defaultSelectableSelected;
+            } else {
+                this.selectedStyle = selectedStyle;
+            }
             this.anchor = document.createElement("a");
             this.anchor.setAttribute("class", this.unselectedStyle);
             this.anchor.classList.add("selectable");
@@ -164,7 +173,6 @@ var Popup = {
         for (let i = 0; i < popups.length; i++) {
             let cls = document.createElement("img");
             cls.setAttribute("class", "close");
-            cls.setAttribute("src", "./images/close.svg");
             cls.addEventListener("click", () => { Popup.closePopup(Popup.getPopupFromChild(cls)) });
             popups[i].appendChild(cls);
         }

@@ -5,6 +5,9 @@
     <title>Web Dashboard</title>
     <link rel="icon" type="image/x-icon" href="./images/Logo.png">
     <link rel="stylesheet" href="./style/whiteboard.css">
+    <link rel="stylesheet" href="./style/blue_theme.css">
+    <link rel="stylesheet" href="./style/dark_theme.css">
+    <link rel="stylesheet" href="./style/light_theme.css">
     <link rel="stylesheet" href="./style/main.css">
     <script type="text/javascript" src="./javascript/utils/settings.js"></script>
     <script type="text/javascript" src="./javascript/utils/socket.js"></script>
@@ -24,7 +27,7 @@
     </div>
     <div id="menu">
         <div id="layout-name-container">
-            <p id="layout-name" class="default-text">default layout</p>
+            <p id="layout-name">default layout</p>
         </div>
         <div id="menu-button-wrapper">
             <div class="dropdown">
@@ -41,6 +44,7 @@
                     <a class="dropdown-option" popup="json-importer">import json</a>
                     <a class="dropdown-option not-default"
                         onclick="Load.setAsDefault(`webdashboard-layout:${Load.currentLayout}`)">set as default</a>
+                    <a class="dropdown-option not-default" popup="layout-renamer">rename layout</a>
                     <a class="dropdown-option not-default" popup="remove-layout"
                         onclick="Load.targetLayout = Load.currentLayout">delete layout</a>
                     <a class="dropdown-option" popup="clear-storage">clear storage</a>

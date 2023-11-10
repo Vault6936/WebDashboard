@@ -75,7 +75,7 @@ var Whiteboard = {
             }.bind(this);
             [document, window, this.div].forEach(((thing) => { thing.onpointerup = this.stopDragging; thing.onmouseup = this.stopDragging }).bind(this));
             this.div.onmouseover = (event) => {
-                if (Whiteboard.editingMode) { event.target.style.cursor = "move" } else if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON || this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) { event.target.style.cursor = "pointer"; if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) event.target.style.background = "#0098cb" } else { event.target.style.cursor = "auto" }
+                if (Whiteboard.editingMode) { event.target.style.cursor = "move" } else if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON || this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) { event.target.style.cursor = "pointer"; if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) event.target.style.background = WhiteboardSettings.Themes.selectedTheme.attributes.nodeHover } else { event.target.style.cursor = "auto" }
             }
             this.div.onmouseleave = (event) => { event.target.style.background = this.color }
             this.div.dispatchEvent(new Event("mouseleave")); //If this event isn't dispatched, the program might glitch and cause the element to think the mouse is over it
@@ -86,6 +86,7 @@ var Whiteboard = {
             this.whiteboard.appendChild(this.container);
             this.label.setAttribute("type", "text");
             this.label.className = "whiteboard-label";
+            this.label.style.background = WhiteboardSettings.Themes.selectedTheme.attributes.draggableLabelColor;
             this.label.placeholder = "Untitled";
             this.label.value = this.name;
             this.container.appendChild(this.label);
@@ -122,7 +123,7 @@ var Whiteboard = {
             this.selectorContainer.innerHTML = "";
             this.selectableGroup = new Popup.SelectableGroup();
             for (let i = 0; i < selectableNames.length; i++) {
-                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => { this.state = selectableNames[i]; this.sendState() }).bind(this), "draggable-unselect", "draggable-select", true));
+                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => { this.state = selectableNames[i]; this.sendState() }).bind(this), WhiteboardSettings.Themes.selectedTheme.draggableUnselect, WhiteboardSettings.Themes.selectedTheme.draggableSelect, true));
             }
             this.selectableGroup.generateHTML(this.selectorContainer);
         }

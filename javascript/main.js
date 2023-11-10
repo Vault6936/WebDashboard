@@ -100,7 +100,7 @@ function getBorderWidth(element) {
 
 function removeMenu(event) {
     try {
-        if (event == null || event.target.className != "menu-button") {
+        if (event == null || !event.target.classList.contains("menu-button")) {
             document.getElementById("menu-container").remove();
         }
     } catch {
@@ -109,17 +109,17 @@ function removeMenu(event) {
 }
 
 function generateContextMenuButton(parent, name, onclick) {
-    let button = document.createElement("a");
-    button.innerHTML = name;
-    button.onclick = function () {
+    let anchor = document.createElement("a");
+    anchor.innerHTML = name;
+    anchor.onclick = function () {
         try {
             onclick();
         } finally {
             removeMenu();
         }
     };
-    button.className = "menu-button";
-    parent.appendChild(button);
+    anchor.classList.add("menu-button", WhiteboardSettings.Themes.selectedTheme.menuBtn);
+    parent.appendChild(anchor);
 }
 
 function generateContextMenu(event) {

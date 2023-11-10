@@ -32,20 +32,19 @@
     width: 100%;
     height: 100%;
     z-index: -1;
-    background-color: white;
 }
 
-.draggable-unselect {
+.draggable-unselect-dark {
     width: 100%;
     height: 20px;
-    background-color: white;
-    color: #0098cb;
+    background-color: #e1e8e3;
+    color: black;
     text-align: center;
 }
 
-.draggable-select {
-    background-color: #0098cb;
-    color: white;
+.draggable-select-dark {
+    background-color: black;
+    color: #e1e8e3;
 }
 
 .draggable-selectable-container {

@@ -89,7 +89,12 @@ var PopupTasks = {
     },
 
     renameLayout: function (event) {
-        let toBeRenamed = Popup.selected.innerHTML;
+        let toBeRenamed;
+        if (Popup.selected == null) {
+            toBeRenamed = Load.currentLayout;
+        } else {
+            toBeRenamed = Popup.selected.innerHTML;
+        }
         let popup = Popup.getPopupFromChild(event.target);
         let name = popup.getElementsByClassName("popup-input")[0].value;
         try {

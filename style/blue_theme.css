@@ -1,0 +1,72 @@
+.default-text-blue {
+    font-size: 15;
+    color: #0098cb;
+}
+
+.menu-blue {
+    background-color: #0098cb;
+}
+
+.transition-blue {
+    background-image: linear-gradient(to right, white, #0098cb);
+}
+
+.whiteboard-blue {
+    background-color: white;
+}
+
+.menu-button-blue {
+    color: #0098cb;
+    background-color: white;
+}
+
+.menu-button-blue:hover {
+    background-color: #0098cb;
+    color: white;
+}
+
+.layout-name-container-blue {
+    background-color: #0098cb;
+}
+
+.layout-name-blue {
+    color: white;
+}
+
+.popup-blue {
+    background-color: white;
+    border: 5px solid #0098cb;
+}
+
+.input-label-blue {
+    color: #0098cb;
+}
+
+.popup-input-blue {
+    background-color: white;
+    border: 5px solid #0098cb;
+}
+
+.apply-blue {
+    background-color: white;
+    color: #0098cb;
+}
+
+.apply-blue:hover {
+    background-color: #0098cb;
+    color: white;
+}
+
+.prompt-blue {
+    color: #0098cb;
+}
+
+.draggable-selectable-field-blue {
+    border: 5px solid #0098cb;
+    background-color: white;
+}
+
+.default-selectable-blue {
+    background-color: #0098cb;
+    color: white;
+}

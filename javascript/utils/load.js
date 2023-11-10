@@ -115,7 +115,7 @@ var Load = {
             return () => {
                 Load.openJSONLayout(`webdashboard-layout:${name}`); Popup.closePopup(popup);
             }
-        }, "layout-selectable default-selectable");
+        }, "layout-selectable default-selectable " + WhiteboardSettings.Themes.selectedTheme.defaultSelectable);
     },
 
     getLayoutJSON: function () {
@@ -135,7 +135,8 @@ var Load = {
 
     loadSettings: function () {
         let settings = JSON.parse(localStorage.getItem("webdashboard-settings"));
-        Object.assign(WhiteboardSettings, settings);
+        //Object.assign(WhiteboardSettings, settings);
+        WhiteboardSettings.setTheme();
     },
 
     handleNotDefaultBtns: function (key) {
