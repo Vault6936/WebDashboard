@@ -261,22 +261,24 @@ var Whiteboard = {
             }
             if (type == undefined || type == null) {
                 type = "button";
-            } else if (type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
+            }
+            this.type = type;
+            if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
+
+            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                 this.setColor("red");
-            } else if (type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
+            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
                 this.selectorContainer.style.display = "grid";
                 this.generateSelectorHTML(this.typeSpecificData.selectableNames);
             } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
                 this.textContainer.style.display = "block";
                 this.textContainer.innerHTML = this.state;
-                console.log("hi");
-            } else if (type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
+            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
                 this.setColor("red");
-            } else if (type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
+            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
                 this.stream.style.display = "block";
                 this.setStreamURL(this.typeSpecificData.streamURL);
             }
-            this.type = type;
         }
 
         setStreamSize(size) {
