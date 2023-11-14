@@ -1,6 +1,6 @@
 .default-text-dark {
     font-size: 15;
-    color: #e1e8e3;
+    color: #f5770a;
 }
 
 .menu-dark {
@@ -12,16 +12,16 @@
 }
 
 .whiteboard-dark {
-    background-color: #6b706c;
+    background-color: #39303b;
 }
 
 .menu-button-dark {
     background-color: black;
-    color: #e1e8e3;
+    color: #f5770a;
 }
 
 .menu-button-dark:hover {
-    background-color: #e1e8e3;
+    background-color: #f5770a;
     color: black;
 }
 
@@ -30,54 +30,54 @@
 }
 
 .layout-name-dark {
-    color: #e1e8e3;
+    color: #f5770a;
 }
 
 .popup-dark {
-    background-color: #6b706c;
+    background-color: #39303b;
     border: 5px solid black;
 }
 
 .input-label-dark {
-    color: #e1e8e3;
+    color: #f5770a;
 }
 
 .popup-input-dark {
-    background-color: #e1e8e3;
+    background-color: #f5770a;
     border: 5px solid black;
 }
 
 .apply-dark {
-    background-color: #e1e8e3;
+    background-color: #f5770a;
     color: black;
 }
 
 .apply-dark:hover {
     background-color: black;
-    color: #e1e8e3;
+    color: #f5770a;
 }
 
 .prompt-dark {
-    color: #e1e8e3;
+    color: #f5770a;
 }
 
 .draggable-selectable-field-dark {
     border: 5px solid black;
-    background-color: #e1e8e3;
+    background-color: #f5770a;
 }
 
 .default-selectable-dark {
-    background-color: #e1e8e3;
+    background-color: #f5770a;
     color: black;
 
 }
 
 .default-selectable-dark:hover {
     background-color: black;
-    color: #e1e8e3;
+    color: #f5770a;
 }
 
 .default-selectable-selected-dark {
     background-color: black;
-    color: #e1e8e3;
+    color: #f5770a;
 }

@@ -65,8 +65,8 @@ public class WebdashboardServer extends WebSocketServer {
                 }
             } else if (Objects.equals(object.getString("messageType"), "node update")) {
                 layout.updateNode(object);
-                System.out.println("boolean value: " + layout.getBooleanValue("violet"));
-                System.out.println("selected value: " + layout.getSelectedValue("indigo"));
+                //System.out.println("boolean value: " + layout.getBooleanValue("violet"));
+                System.out.println("selected value: " + layout.getSelectedValue("encoder1"));
             } else if (Objects.equals(object.getString("messageType"), "click")) {
                 layout.addCallback("green", () -> {System.out.println("I've been clicked!");});
                 layout.buttonClicked(object.getString("nodeID"));

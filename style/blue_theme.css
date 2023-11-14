@@ -67,6 +67,16 @@
 }
 
 .default-selectable-blue {
+    background-color: white;
+    color: #0098cb;
+}
+
+.default-selectable-blue:hover {
+    background-color: #0098cb;
+    color: white;
+}
+
+.default-selectable-selected-blue {
     background-color: #0098cb;
     color: white;
 }

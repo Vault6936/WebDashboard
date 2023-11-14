@@ -27,6 +27,8 @@ function consoleOpen() {
 }
 
 function initialize() { //This is called when the body portion of the html document loads
+    Load.loadSettings();
+
     if (!Load.listLayoutNames().includes("default")) {
         Load.defaultSave();
         console.warn("It looks like this is your first time using the Vault 6936 Web Dashboard in this browser.  Welcome!");
@@ -56,7 +58,11 @@ function initialize() { //This is called when the body portion of the html docum
     Popup.populatePopupClickableList(document.getElementById("select-type-container"), draggableTypes, (iterable) => iterable, (iterable) => { return () => PopupTasks.setType(iterable) });
 
     Popup.populateVerticalInputs(document.getElementById("websocket-info-wrapper"), new Popup.PopupInput("6936", "team number", "team-number"), new Popup.PopupInput("ws://10.xx.yy.2:5800", "websocket url", "websocket-url"));
-    //Popup.populateVerticalInputs(document.getElementById("default-settings-wrapper"), new Popup.PopupInput("100x100", "default draggable size", "default-size"), new Popup.PopupInput("#000000", "default draggable color", "default-color"));
+    let themeWrapper = document.getElementById("theme-wrapper");
+    let themes = [new Popup.Selectable("Mr. Blue", () => WhiteboardSettings.Themes.selectedTheme = WhiteboardSettings.Themes.MR_BLUE, null, null, true), new Popup.Selectable("Charcoal", () => WhiteboardSettings.Themes.selectedTheme = WhiteboardSettings.Themes.CHARCOAL, null, null, true), new Popup.Selectable("Snow", () => WhiteboardSettings.Themes.selectedTheme = WhiteboardSettings.Themes.LIGHT, null, null, true)];
+    let group = new Popup.SelectableGroup();
+    themes.forEach((theme) => group.add(theme));
+    group.generateHTML(themeWrapper);
 
     Popup.populateVerticalInputs(document.getElementById("draggable-position-inputs"), new Popup.PopupInput("0", "x position", "x-pose-input"), new Popup.PopupInput("0", "y position", "y-pose-input"));
     Popup.populateVerticalInputs(document.getElementById("import-json-info"), new Popup.PopupInput("import", "layout name", "import-layout-name"), new Popup.PopupInput("", "layout JSON", "import-layout-json"));
@@ -64,6 +70,7 @@ function initialize() { //This is called when the body portion of the html docum
     Popup.initializePopups();
 
     Load.openJSONLayout("webdashboard-layout:default");
+    WhiteboardSettings.setTheme();
 }
 
 function addEventListeners() {

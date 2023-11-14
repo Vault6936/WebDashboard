@@ -35,7 +35,6 @@ body {
 .default-text {
     font-family: Roboto;
     font-size: 15px;
-    color: #0098cb;
 }
 
 #menu {
@@ -210,7 +209,7 @@ body {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -15px);
-    margin: 0px;
+    margin-top: 5px;
 }
 
 .input-label {
@@ -406,13 +405,28 @@ body {
     user-select: none;
 }
 
-#draggable-selectable-field {
-    width: 200px;
-    height: 150px;
-    background-color: white;
-    border-radius: 7px;
-    font-family: Roboto;
+.selectable-container {
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: repeat(auto-fill, min-content);
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+#theme-chooser-wrapper {
+    width: 100%;
+    height: min-content;
+}
+
+.theme-chooser-label {
     font-size: 15px;
-    resize: none;
-    padding: 5px;
+    text-align: center;
+}
+
+.horizontal-centered-wrapper {
+    width: min-content;
+    height: min-content;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
 }

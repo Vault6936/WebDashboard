@@ -25,10 +25,10 @@ var WhiteboardSettings = {
             attributes: {
                 closeSrc: "./images/close-blue.svg",
                 nodeHover: "black",
-                draggableLabelColor: "white"
+                draggableLabelColor: "white",
             }
         },
-        DARK: {
+        CHARCOAL: {
             defaultText: "default-text-dark",
             menu: "menu-dark",
             menuTransition: "transition-dark",
@@ -49,10 +49,33 @@ var WhiteboardSettings = {
             attributes: {
                 closeSrc: "./images/close-dark.svg",
                 nodeHover: "black",
-                draggableLabelColor: "#e1e8e3"
+                draggableLabelColor: "#e1e8e3",
             }
         },
-        LIGHT: null,
+        LIGHT: {
+            defaultText: "default-text-light",
+            menu: "menu-light",
+            menuTransition: "transition-light",
+            whiteboard: "whiteboard-light",
+            menuBtn: "menu-button-light",
+            layoutName: "layout-name-container-light",
+            layoutNameTxt: "layout-name-light",
+            popup: "popup-light",
+            inputLabel: "input-label-light",
+            popupInput: "popup-input-light",
+            applyBtn: "apply-light",
+            prompt: "prompt-light",
+            draggableField: "draggable-selectable-field-light",
+            defaultSelectable: "default-selectable-light",
+            defaultSelectableSelected: "default-selectable-selected-light",
+            draggableUnselect: "draggable-unselect-light",
+            draggableSelect: "draggable-select-light",
+            attributes: {
+                closeSrc: "./images/close-light.svg",
+                nodeHover: "black",
+                draggableLabelColor: "white",
+            }
+        },
 
         selectedTheme: null,
     },
@@ -63,14 +86,11 @@ var WhiteboardSettings = {
         WhiteboardSettings.websocketURL = Popup.getInputValue("websocket-url");
         localStorage.setItem("webdashboard-settings", JSON.stringify(WhiteboardSettings));
         Popup.closePopup(popup);
-        WhiteboardSettings.setTheme();
     },
 
     populateSettingsInfo: function () {
         Popup.setInputValue("team-number", WhiteboardSettings.teamNumber);
         Popup.setInputValue("websocket-url", WhiteboardSettings.websocketURL);
-        Popup.setInputValue("default-size", "100x100");
-        Popup.setInputValue("default-color", "#0098cb");
     },
 
     addClass(currentClass, toAdd) {
@@ -101,11 +121,11 @@ var WhiteboardSettings = {
         WhiteboardSettings.addClass("apply", theme.applyBtn);
         Array.from(document.getElementsByClassName("close")).forEach((img) => { img.setAttribute("src", theme.attributes.closeSrc) });
         WhiteboardSettings.addClass("prompt", theme.prompt);
-        WhiteboardSettings.addClass("draggable-selectable-field", theme.draggableField);
+        document.getElementById("draggable-selectable-field").classList.add(theme.draggableField);
     },
 
 };
 
 window.WhiteboardSettings = WhiteboardSettings || {};
 
-WhiteboardSettings.Themes.selectedTheme = WhiteboardSettings.Themes.DARK;
+WhiteboardSettings.Themes.selectedTheme = WhiteboardSettings.Themes.CHARCOAL;

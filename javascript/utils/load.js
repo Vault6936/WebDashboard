@@ -135,8 +135,7 @@ var Load = {
 
     loadSettings: function () {
         let settings = JSON.parse(localStorage.getItem("webdashboard-settings"));
-        //Object.assign(WhiteboardSettings, settings);
-        WhiteboardSettings.setTheme();
+        Object.assign(WhiteboardSettings, settings);
     },
 
     handleNotDefaultBtns: function (key) {
@@ -149,7 +148,6 @@ var Load = {
     },
 
     openJSONLayout: function (key) {
-        Load.loadSettings();
         Load.handleNotDefaultBtns(key);
         Load.updateCurrentLayout(key.replace(/webdashboard-layout:/, ""));
         Load.clearLayout(logChange = false);

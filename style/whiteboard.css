@@ -37,14 +37,40 @@
 .draggable-unselect-dark {
     width: 100%;
     height: 20px;
-    background-color: #e1e8e3;
+    background-color: #f5770a;
     color: black;
     text-align: center;
 }
 
 .draggable-select-dark {
     background-color: black;
-    color: #e1e8e3;
+    color: #f5770a;
+}
+
+.draggable-unselect-blue {
+    width: 100%;
+    height: 20px;
+    background-color: white;
+    color: #0098cb;
+    text-align: center;
+}
+
+.draggable-select-blue {
+    background-color: #0098cb;
+    color: white;
+}
+
+.draggable-unselect-light {
+    width: 100%;
+    height: 20px;
+    background-color: white;
+    color: #aeaeae;
+    text-align: center;
+}
+
+.draggable-select-light {
+    background-color: #aeaeae;
+    color: white;
 }
 
 .draggable-selectable-container {
@@ -56,7 +82,16 @@
     grid-template-rows: repeat(auto-fill, min-content);
     overflow-x: hidden;
     overflow-y: scroll;
-    background-color: white;
+}
+
+#draggable-selectable-field {
+    width: 200px;
+    height: 150px;
+    border-radius: 7px;
+    font-family: Roboto;
+    font-size: 15px;
+    resize: none;
+    padding: 5px;
 }
 
 .camera-stream {

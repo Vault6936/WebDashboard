@@ -79,12 +79,19 @@
     </div>
     <div id="popup-background"></div>
 
-    <div id="settings" class="popup" style="width: 500px; height: 300px">
+    <div id="settings" class="popup" style="width: 500px; height: 500px">
         <a class="popup-onopen" onclick="WhiteboardSettings.populateSettingsInfo()"></a>
-        <div class="absolute-centered-wrapper">
-            <div id="websocket-info-wrapper"></div>
-            <div id="default-settings-wrapper"></div>
-            <div id="theme-wrapper"></div>
+        <div class="absolute-centered-wrapper" style="width: 300px">
+            <div class="horizontal-centered-wrapper">
+                <div id="websocket-info-wrapper"></div>
+                <div id="default-settings-wrapper"></div>
+            </div>
+            <div id="theme-chooser-wrapper">
+                <p class="theme-chooser-label default-text">dashboard theme</p>
+                <div id="theme-wrapper" class="selectable-container"></div>
+                <p class="theme-chooser-label default-text">theme changes will not take effect until the page is
+                    reloaded</p>
+            </div>
         </div>
         <button class="apply" onclick="WhiteboardSettings.saveSettings(event)">apply</button>
     </div>
@@ -115,7 +122,7 @@
         <div class="vertical-input-container absolute-centered-wrapper" id="import-json-info"></div>
         <button class="apply" onclick="Load.importJSON(event)">apply</button>
     </div>
-    <div id="draggable-selector-creator" class="popup" style="width: 300px; height: 275px">
+    <div id="draggable-selector-creator" class="popup" style="width: 300px; height: 285px">
         <div class="absolute-centered-wrapper" id="selector-field-wrapper">
             <textarea placeholder="item1, item2, item3..." id="draggable-selectable-field"></textarea>
         </div>

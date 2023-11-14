@@ -84,12 +84,12 @@ var Popup = {
         constructor(name, onclick, unselectedStyle, selectedStyle, isSelectable) {
             this.group = null;
             this.name = name;
-            if (unselectedStyle == undefined) {
+            if (unselectedStyle == undefined || unselectedStyle == null) {
                 this.unselectedStyle = "default-selectable " + WhiteboardSettings.Themes.selectedTheme.defaultSelectable;
             } else {
                 this.unselectedStyle = unselectedStyle;
             }
-            if (selectedStyle == undefined) {
+            if (selectedStyle == undefined || selectedStyle == null) {
                 this.selectedStyle = "default-selectable-selected " + WhiteboardSettings.Themes.selectedTheme.defaultSelectableSelected;
             } else {
                 this.selectedStyle = selectedStyle;
@@ -103,7 +103,7 @@ var Popup = {
                     this.group.select(this);
                 }
                 try {
-                    onclick();
+                    if (!(onclick == null || onclick == undefined)) onclick();
                 } catch (e) {
                     console.log(e);
                 }
@@ -117,11 +117,13 @@ var Popup = {
         selected = null;
         selectables = [];
         select(selectable) {
-            for (let i = 0; i < this.selectables.length; i++) {
-                this.selectables[i].anchor.classList.remove(this.selectables[i].selectedStyle);
-            }
             this.selected = selectable;
-            selectable.anchor.classList.add(selectable.selectedStyle);
+            for (let i = 0; i < this.selectables.length; i++) {
+                let selectedStyles = this.selectables[i].selectedStyle.trim().split(" ");
+                selectedStyles.forEach((style) => this.selectables[i].anchor.classList.remove(style));
+            }
+            let selectedStyles = selectable.selectedStyle.trim().split(" ");
+            selectedStyles.forEach((style) => selectable.anchor.classList.add(style));
         }
         add(...selectableItems) {
             selectableItems.forEach((selectable) => { this.selectables.push(selectable); selectable.group = this; });
