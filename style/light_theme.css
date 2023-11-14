@@ -1,0 +1,83 @@
+.default-text-light {
+    font-size: 15;
+    color: #aeaeae;
+}
+
+.menu-light {
+    background-color: white;
+}
+
+.transition-light {
+    background-color: white;
+}
+
+.whiteboard-light {
+    background-color: white;
+}
+
+.menu-button-light {
+    background-color: white;
+    color: #aeaeae;
+}
+
+.menu-button-light:hover {
+    background-color: #aeaeae;
+    color: white;
+}
+
+.layout-name-container-light {
+    background-color: #aeaeae;
+}
+
+.layout-name-light {
+    color: white;
+}
+
+.popup-light {
+    background-color: white;
+    border: 5px solid #aeaeae;
+}
+
+.input-label-light {
+    color: #aeaeae;
+}
+
+.popup-input-light {
+    background-color: white;
+    border: 5px solid #aeaeae;
+}
+
+.apply-light {
+    background-color: #aeaeae;
+    color: white;
+}
+
+.apply-light:hover {
+    background-color: white;
+    color: #aeaeae;
+}
+
+.prompt-light {
+    color: #aeaeae;
+}
+
+.draggable-selectable-field-light {
+    border: 5px solid #aeaeae;
+    background-color: white;
+}
+
+.default-selectable-light {
+    background-color: white;
+    color: #aeaeae;
+
+}
+
+.default-selectable-light:hover {
+    background-color: #aeaeae;
+    color: white;
+}
+
+.default-selectable-selected-light {
+    background-color: #aeaeae;
+    color: white;
+}
