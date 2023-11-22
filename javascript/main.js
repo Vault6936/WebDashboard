@@ -7,12 +7,6 @@ var clientID;
 
 var isFullScreen = false;
 
-window.onresize = function () {
-    if (document.mozFullscreenElement) {
-        console.log("hi");
-    }
-}
-
 function inFullScreen() {
     const wiewport = window.visualViewport;
     const windowWidth = window.innerWidth * window.devicePixelRatio;

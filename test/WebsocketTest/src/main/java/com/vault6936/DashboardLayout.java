@@ -61,6 +61,17 @@ public class DashboardLayout {
         throw new IllegalArgumentException("Requested node does not exist");
     }
 
+    public String getInputValue(String id) {
+        for (DashboardNode node: nodes) {
+            if (Objects.equals(node.id, id)) {
+                if (node.type != DashboardNode.Type.TEXT_INPUT) {
+                    throw new IllegalArgumentException("Requested node is not an input node");
+                }
+                return node.state;
+            }
+        }
+        throw new IllegalArgumentException("Requested node does not exist");
+    }
     public String getSelectedValue(String id) {
         for (DashboardNode node: nodes) {
             if (Objects.equals(node.id, id)) {
@@ -116,6 +127,7 @@ public class DashboardLayout {
             SELECTOR("selector"),
             BOOLEAN_TELEMETRY("boolean telemetry"),
             TEXT_TELEMETRY("text telemetry"),
+            TEXT_INPUT("text input"),
             CAMERA_STREAM("camera steam");
 
             private final String name;

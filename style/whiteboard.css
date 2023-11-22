@@ -25,6 +25,14 @@
     height: 100%;
 }
 
+.draggable-text-field {
+    width: calc(100% - 5px);
+    height: calc(100% - 5px);
+    font-family: Roboto;
+    font-size: 15px;
+    resize: none;
+}
+
 #whiteboard {
     position: fixed;
     left: 0px;

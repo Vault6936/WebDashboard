@@ -8,6 +8,7 @@ var Whiteboard = {
             SELECTOR: "selector",
             BOOLEAN_TELEMETRY: "boolean telemetry",
             TEXT_TELEMETRY: "text telemetry",
+            TEXT_INPUT: "text input",
             CAMERA_STREAM: "camera stream",
         };
 
@@ -33,6 +34,10 @@ var Whiteboard = {
             this.textContainer = document.createElement("div");
             this.textContainer.classList.add("draggable-text-container");
             this.div.appendChild(this.textContainer);
+            this.textField = document.createElement("textarea");
+            this.textField.classList.add("draggable-text-field");
+            this.textField.oninput = this.handleTyping;
+            this.div.appendChild(this.textField);
             this.stream = document.createElement("img");
             this.stream.setAttribute("draggable", false);
             this.stream.classList.add("camera-stream");
@@ -113,6 +118,7 @@ var Whiteboard = {
             this.setState = this.setState.bind(this);
             this.sendState = this.sendState.bind(this);
             this.handleClick = this.handleClick.bind(this);
+            this.handleTyping = this.handleTyping.bind(this);
             this.generateSelectorHTML = this.generateSelectorHTML.bind(this);
             this.getShallowCopy = this.getShallowCopy.bind(this);
         }
@@ -139,8 +145,9 @@ var Whiteboard = {
                         this.setColor("red");
                     }
                 } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
-                    this.textContainer.style.display = "block";
                     this.textContainer.innerHTML = state;
+                } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) {
+                    this.textField.innerHTML = state;
                 } else if (this.type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
                     let toSelect = null;
                     for (let i = 0; i < this.selectableGroup.selectables.length; i++) {
@@ -251,8 +258,15 @@ var Whiteboard = {
             this.layer = layer;
         }
 
+        handleTyping() {
+            this.state = this.textField.value;
+            console.log(this.state);
+            this.sendState();
+        }
+
         setType(type) {
             this.textContainer.style.display = "none";
+            this.textField.style.display = "none";
             this.selectorContainer.innerHTML = "";
             this.selectorContainer.style.display = "none";
             this.stream.style.display = "none";
@@ -274,6 +288,9 @@ var Whiteboard = {
             } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
                 this.textContainer.style.display = "block";
                 this.textContainer.innerHTML = this.state;
+            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) {
+                this.textField.style.display = "block";
+                this.textField.innerHTML = this.state;
             } else if (this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
                 this.setColor("red");
             } else if (this.type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
@@ -457,13 +474,13 @@ var Whiteboard = {
         var border = document.getElementById("whiteboard-border");
         if (Whiteboard.editingMode) {
             border.style.display = "none";
-            editingToggle.innerHTML = "turn on editing mode";
+            editingToggle.innerHTML = "enable editing";
             Array.from(labels).forEach((label) => label.readOnly = true);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "none");
             this.draggableRegistry.forEach((draggable) => { draggable.div.title = "" });
         } else {
             border.style.display = "block";
-            editingToggle.innerHTML = "turn off editing mode";
+            editingToggle.innerHTML = "disable editing";
             Array.from(labels).forEach((label) => label.readOnly = false);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "block");
             this.draggableRegistry.forEach((draggable) => { draggable.div.title = `ID: ${draggable.id}` });
