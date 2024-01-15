@@ -27,3 +27,6 @@ The test directory contains a sample Java program with websocket server code and
 
 # Contributing
 We would love to see how other teams can improve this project!  If you or your team is interested in contributing, simply create a pull request.  If you have any questions or suggestions that aren't suited for an issue, feel free to email us at vault6936programming@gmail.com. 
+
+# Licensing
+This project is available under the <a href="https://mit-license.org/">MIT license</a>.
