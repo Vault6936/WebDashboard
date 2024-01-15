@@ -8,7 +8,7 @@ var clientID;
 var isFullScreen = false;
 
 function inFullScreen() {
-    const wiewport = window.visualViewport;
+    const viewport = window.visualViewport;
     const windowWidth = window.innerWidth * window.devicePixelRatio;
     const windowHeight = window.innerHeight * window.devicePixelRatio;
     const screenWidth = window.screen.width;
@@ -138,10 +138,12 @@ function generateContextMenu(event) {
             generateContextMenuButton(container, "send to front", () => { Whiteboard.logChange(); draggable.setLayer(Whiteboard.draggableRegistry.length - 1) });
             generateContextMenuButton(container, "send to back", () => { Whiteboard.logChange(); draggable.setLayer(0) });
             generateContextMenuButton(container, "set id", () => Popup.openPopup("id-changer"));
-            if (draggable.type !== Whiteboard.WhiteboardDraggable.Types.TOGGLE) generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
+            if (draggable.type !== Whiteboard.WhiteboardDraggable.Types.TOGGLE && draggable.type !== Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
             generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
             generateContextMenuButton(container, "set position", () => Popup.openPopup("position-setter"));
-            if (draggable.type == Whiteboard.WhiteboardDraggable.Types.SELECTOR) generateContextMenuButton(container, "define selectables", () => Popup.openPopup("draggable-selector-creator"));
+            if (draggable.type == Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
+                generateContextMenuButton(container, "define selectables", () => Popup.openPopup("draggable-selector-creator"));
+            }
             if (draggable.type == Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
                 generateContextMenuButton(container, "set stream url", () => Popup.openPopup("stream-url-setter"));
                 generateContextMenuButton(container, "set stream size", () => Popup.openPopup("stream-size-setter"));

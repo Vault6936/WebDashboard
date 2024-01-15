@@ -10,6 +10,8 @@ var Whiteboard = {
             TEXT_TELEMETRY: "text telemetry",
             TEXT_INPUT: "text input",
             CAMERA_STREAM: "camera stream",
+            GRAPH: "position graph",
+            LABEL: "label",
         };
 
         name;
@@ -42,6 +44,11 @@ var Whiteboard = {
             this.stream.setAttribute("draggable", false);
             this.stream.classList.add("camera-stream");
             this.div.appendChild(this.stream);
+            this.canvas = document.createElement("canvas");
+            this.canvas.classList.add("canvas");
+            this.context = this.canvas.getContext("2d");
+            this.context.imageSmoothingEnabled = false;
+            this.div.appendChild(this.canvas);
             this.container = document.createElement("span");
             this.label = document.createElement("input");
             if (!Whiteboard.editingMode) this.label.readOnly = true;
@@ -51,8 +58,9 @@ var Whiteboard = {
             // #region declare class fields
             this.name = name;
             this.position = position;
+            this.setSize(size);
             this.setColor(color);
-            this.setLayer(layer);
+            this.setLayer(layer, false);
             if (typeSpecificData == undefined) this.typeSpecificData = {}; else this.typeSpecificData = typeSpecificData;
             this.setStreamSize(this.typeSpecificData.streamSize);
             this.selectableGroup = null;
@@ -65,7 +73,6 @@ var Whiteboard = {
 
             // #region dragging functionality
             this.draggingDiv = false;
-            this.setSize(size);
             this.div.onmousedown = function (event) {
                 if (Whiteboard.editingMode && event.button === 0) {
                     if (this.draggingDiv) {
@@ -121,6 +128,7 @@ var Whiteboard = {
             this.handleTyping = this.handleTyping.bind(this);
             this.generateSelectorHTML = this.generateSelectorHTML.bind(this);
             this.getShallowCopy = this.getShallowCopy.bind(this);
+            this.transformCanvasCoordinates = this.transformCanvasCoordinates.bind(this);
         }
 
         generateSelectorHTML(selectableNames) {
@@ -139,7 +147,7 @@ var Whiteboard = {
                 this.state = state;
                 if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE || this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
                     this.state = String(this.state);
-                    if (this.state == "true") {
+                    if (this.state === "true") {
                         this.setColor("limegreen");
                     } else {
                         this.setColor("red");
@@ -158,11 +166,115 @@ var Whiteboard = {
                     if (toSelect == null) throw new Error("Selector node does not have requested state");
                     this.selectableGroup.select(toSelect);
                     this.state = toSelect.name;
+                } else if (this.type === Whiteboard.WhiteboardDraggable.Types.GRAPH) {
+                    let x = 0;
+                    let y = 0;
+                    let heading = 0;
+                    try {
+                        x = parseFloat(state.match(/x:-?[0-9.]*/)[0].replace("x:", ""));
+                        y = parseFloat(state.match(/y:-?[0-9.]*/)[0].replace("y:", ""));
+                        heading = parseFloat(state.match(/heading:-?[0-9.]*/)[0].replace("heading:", ""));
+                    } catch {
+                        Notify.createNotice("Couldn't read robot position info!", "negative", 3000)
+                    }
+                    this.drawGraph(x, y, heading);
                 }
             } catch (err) {
                 console.warn(err);
                 Notify.createNotice("Could not apply draggable state", "negative", 2000);
             }
+        }
+
+        drawGraph(botX, botY, heading) {
+            const x = 0;
+            const y = 0;
+            this.context.clearRect(0, 0, (this.size.x - 10), (this.size.y - 10));
+            let spacing = 25;
+            let lineColor = "#f0f0f5";
+            for (let i = 0; i < Math.ceil((this.size.y - 10) / spacing); i++) {
+                this.drawLine(new Positioning.Vector2d(-(this.size.x - 10) / 2, spacing * i), new Positioning.Vector2d((this.size.x - 10) / 2, spacing * i), lineColor);
+                this.drawLine(new Positioning.Vector2d(-(this.size.x - 10) / 2, -spacing * (i + 1)), new Positioning.Vector2d((this.size.x - 10) / 2, -spacing * (i + 1)), lineColor);
+           }
+            for (let i = 0; i < Math.ceil((this.size.x - 10) / spacing); i++) {
+                this.drawLine(new Positioning.Vector2d(spacing * i, -(this.size.y - 10) / 2), new Positioning.Vector2d(spacing * i, (this.size.y - 10) / 2), lineColor);
+                this.drawLine(new Positioning.Vector2d(-spacing * (i + 1), -(this.size.y - 10) / 2), new Positioning.Vector2d(-spacing * (i + 1), (this.size.y - 10) / 2), lineColor);
+            }
+            this.context.fillStyle = "#000000";
+            this.context.font = "15px Roboto";
+            this.context.fillText("x: " + botX, 10, 20);
+            this.context.fillText("y: " + botY, 10, 40);
+            this.context.fillText("heading: " + Math.round((heading * 180 / Math.PI) % 360), 10, 60);                 
+            this.drawRect(new Positioning.Pose2d(new Positioning.Vector2d(botX, botY), heading), 50, 50, "#3973ac");
+            this.drawArrow(new Positioning.Pose2d(new Positioning.Vector2d(botX, botY), heading), 40, 40, "white");
+        }
+
+        transformCanvasCoordinates(pose) {
+            let x = pose.x;
+            let y = pose.y;
+            x += (this.size.x - 10) / 2;
+            y = (this.size.y - 10) / 2 - y;
+            return new Positioning.Vector2d(x, y); 
+        }
+
+        rotate(point1, point2, angle) {
+            let x = (point1.x - point2.x) * Math.cos(angle) - (point1.y - point2.y) * Math.sin(angle) + point2.x;
+            let y = (point1.x - point2.x) * Math.sin(angle) + (point1.y - point2.y) * Math.cos(angle) + point2.y;
+            return new Positioning.Vector2d(x, y);
+        }
+
+        drawLine(point1, point2, color="#000000") {
+            point1 = this.transformCanvasCoordinates(point1);
+            point2 = this.transformCanvasCoordinates(point2);
+            this.context.strokeStyle = color;
+            this.context.beginPath();
+            this.context.moveTo(point1.x, point1.y);
+            this.context.lineTo(point2.x, point2.y);
+            this.context.closePath();
+            this.context.stroke();
+        }
+
+        drawShape(vectors, color="#000000") {
+            this.context.fillStyle = color;
+            this.context.beginPath();
+            this.context.moveTo(vectors[0].x, vectors[0].y);
+            for (let i = 1; i < vectors.length; i++) {
+                this.context.lineTo(vectors[i].x, vectors[i].y);
+            }
+            this.context.lineTo(vectors[0].x, vectors[0].y);
+            this.context.closePath();
+            this.context.fill();
+        }
+
+
+        drawArrow(pose, width, height, color="red") {
+            let x = pose.vector.x;
+            let y = pose.vector.y;
+
+            let vectors = [
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x - width / 6, y - height / 2), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x - width / 6, y + height / 5), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x - width / 2, y + height / 5), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x, y + height / 2), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x + width / 2, y + height / 5), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x + width / 6, y + height / 5), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x + width / 6, y - height / 2), pose.vector, pose.rotation)),
+            ];
+
+            this.drawShape(vectors, color);
+        }
+
+        drawRect(pose, width, height, color="#000000") {
+            let x = pose.vector.x;
+            let y = pose.vector.y;
+
+            let vectors = [
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x - width / 2, y - height / 2), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x - width / 2, y + height / 2), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x + width / 2, y + height / 2), pose.vector, pose.rotation)),
+                this.transformCanvasCoordinates(this.rotate(new Positioning.Vector2d(x + width / 2, y - height / 2), pose.vector, pose.rotation)),
+            ];
+
+            this.drawShape(vectors, color);
         }
 
         sendState() {
@@ -196,8 +308,6 @@ var Whiteboard = {
             }
         }
 
-
-
         mouseDrag() {
             this.setPosition(Positioning.mousePosition);
         }
@@ -230,6 +340,10 @@ var Whiteboard = {
             this.label.style.width = Positioning.toHTMLPositionPX(Positioning.clamp(this.size.x * 0.75, 75, Number.POSITIVE_INFINITY));
             Whiteboard.dragOffset = new Positioning.Vector2d(0, 0); // Calling setPosition() will take into account the dragOffset variable.  This isn't desirable here, so it is set to (0, 0)
             this.setPosition(this.position); // If this method is not called, the position of the label relative to that of the div will be wrong
+            this.canvas.style.width = Positioning.toHTMLPositionPX(this.size.x - 10);
+            this.canvas.style.height = Positioning.toHTMLPositionPX(this.size.y - 10);
+            this.canvas.width = this.size.x - 10;
+            this.canvas.height = this.size.y - 10;
         }
 
         setColor(color) {
@@ -238,29 +352,25 @@ var Whiteboard = {
         }
 
         setLayer(layer, arrangeOthers = true) {
-            layer = Positioning.clamp(layer, 0, Whiteboard.draggableRegistry.length);
+            if (layer == this.layer) return;
             this.div.style.zIndex = 1000 + 2 * layer;
             this.label.style.zIndex = 1001 + 2 * layer;
-            if (this.layer != undefined && layer != this.layer && arrangeOthers) { // this.layer is equivalent to the prior draggable layer, and layer is equivalent to the new layer
-                Whiteboard.draggableRegistry.forEach((draggable) => {
-                    if (draggable.arrayIndex == this.arrayIndex) return; // The draggable should not be doing any extra operations on itself
-                    if (layer > this.layer) { // If the layer has been bumped up
-                        if (draggable.layer > this.layer && draggable.layer <= layer) { // If the draggable has been moved up from layer a to layer b, each layer after layer a and through layer b should be dropped down by one layer
-                            draggable.setLayer(draggable.layer - 1, false);
-                        }
-                    } else { // If the layer has been bumped down
-                        if (draggable.layer >= layer && draggable.layer < this.layer) { // If the draggable has been moved down from layer b to layer a, each layer from layer a until layer be should be moved up by one layer
-                            draggable.setLayer(draggable.layer + 1, false);
-                        }
+            if (this.layer != undefined && arrangeOthers) { // this.layer is equivalent to the prior draggable layer, and layer is equivalent to the new layer
+                if (layer > this.layer) {
+                    for (let i = layer; i > this.layer; i--) {
+                        Whiteboard.draggableRegistry[i].setLayer(i - 1, false);
                     }
-                });
+                } else {
+                    for (let i = layer; i < this.layer; i++) {
+                        Whiteboard.draggableRegistry[i].setLayer(i + 1, false);
+                    }
+                }
             }
             this.layer = layer;
         }
 
         handleTyping() {
             this.state = this.textField.value;
-            console.log(this.state);
             this.sendState();
         }
 
@@ -271,6 +381,7 @@ var Whiteboard = {
             this.selectorContainer.style.display = "none";
             this.stream.style.display = "none";
             this.stream.src = "";
+            this.canvas.style.display = "none";
             if (this.type != type && this.type != undefined) {
                 this.state = "";
             }
@@ -296,6 +407,9 @@ var Whiteboard = {
             } else if (this.type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
                 this.stream.style.display = "block";
                 this.setStreamURL(this.typeSpecificData.streamURL);
+            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.GRAPH) {
+                this.setColor("gray");
+                this.canvas.style.display = "block";
             }
         }
 
