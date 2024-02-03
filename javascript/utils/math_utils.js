@@ -4,6 +4,9 @@ var Positioning = {
     },
     toHTMLPositionPX: function (value) {
         return value + "px";
+    },    
+    round: function (number, precision = 0) {
+        return Math.round(number * 10 ** precision) / (10 ** precision);
     },
     Vector2d: class {
         constructor(x, y) {

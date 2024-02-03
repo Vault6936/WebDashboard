@@ -130,9 +130,13 @@ function generateContextMenu(event) {
     let container = document.createElement("div");
     container.id = "menu-container";
     let draggableElement = Whiteboard.getDraggableAncestor(event.target);
+    console.log(draggableElement);
     if (draggableElement) {
         let draggable = Whiteboard.draggableRegistry[Whiteboard.getDraggableIndex(draggableElement)]
         Whiteboard.currentDraggable = draggable;
+        if (draggable.type == Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
+            generateContextMenuButton(container, "copy data", () => {navigator.clipboard.writeText(draggable.state); Notify.createNotice("copied", "positive", 3000)});
+        }
         if (Whiteboard.editingMode) {
             generateContextMenuButton(container, "remove", () => { if (Whiteboard.editingMode) { Whiteboard.logChange(); draggable.delete() } });
             generateContextMenuButton(container, "send to front", () => { Whiteboard.logChange(); draggable.setLayer(Whiteboard.draggableRegistry.length - 1) });

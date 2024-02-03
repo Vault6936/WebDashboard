@@ -167,12 +167,12 @@ var Whiteboard = {
                     this.selectableGroup.select(toSelect);
                     this.state = toSelect.name;
                 } else if (this.type === Whiteboard.WhiteboardDraggable.Types.GRAPH) {
-                    let x = 0;
-                    let y = 0;
-                    let heading = 0;
+                    let x = 0.00;
+                    let y = 0.00;
+                    let heading = 0.00;
                     try {
-                        x = parseFloat(state.match(/x:-?[0-9.]*/)[0].replace("x:", ""));
-                        y = parseFloat(state.match(/y:-?[0-9.]*/)[0].replace("y:", ""));
+                        x = Positioning.round(parseFloat(state.match(/x:-?[0-9.]*/)[0].replace("x:", "")), 4);
+                        y = Positioning.round(parseFloat(state.match(/y:-?[0-9.]*/)[0].replace("y:", "")), 4);
                         heading = parseFloat(state.match(/heading:-?[0-9.]*/)[0].replace("heading:", ""));
                     } catch {
                         Notify.createNotice("Couldn't read robot position info!", "negative", 3000)
@@ -203,9 +203,9 @@ var Whiteboard = {
             this.context.font = "15px Roboto";
             this.context.fillText("x: " + botX, 10, 20);
             this.context.fillText("y: " + botY, 10, 40);
-            this.context.fillText("heading: " + Math.round((heading * 180 / Math.PI) % 360), 10, 60);                 
-            this.drawRect(new Positioning.Pose2d(new Positioning.Vector2d(botX, botY), heading), 50, 50, "#3973ac");
-            this.drawArrow(new Positioning.Pose2d(new Positioning.Vector2d(botX, botY), heading), 40, 40, "white");
+            this.context.fillText("heading: " + Positioning.round((heading * 180 / Math.PI) % 360, 2) + "°", 10, 60);                 
+            this.drawRect(new Positioning.Pose2d(new Positioning.Vector2d(botX * 1000, botY * 1000), heading), 50, 50, "#3973ac");
+            this.drawArrow(new Positioning.Pose2d(new Positioning.Vector2d(botX * 1000, botY * 1000), heading), 40, 40, "white");
         }
 
         transformCanvasCoordinates(pose) {
