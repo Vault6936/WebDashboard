@@ -78,6 +78,9 @@ function addEventListeners() {
                 Whiteboard.undoChange();
             } else if (event.key == "y") {
                 Whiteboard.redoChange();
+            } else if (event.key == "e") {
+                event.preventDefault();
+                Whiteboard.toggleEditingMode();
             }
         }
     });

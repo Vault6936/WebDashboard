@@ -8,7 +8,7 @@ public class Main {
         System.out.println("Websocket server initialized");
         int i = 0;
         while (true) {
-            DashboardLayout.setNodeValue("orange", "counter: " + i);
+            DashboardLayout.setNodeValue("encoder", "counter: " + i);
             i++;
             Thread.sleep(1000);
         }

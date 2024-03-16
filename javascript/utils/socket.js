@@ -38,7 +38,7 @@ var Socket = {
     openSocket: function (recursion) {
         if (recursion == 0) {
             Socket.connecting = true;
-            Notify.createNotice("Attempting to connect to the RoboRio...", "neutral", 3000);
+            Notify.createNotice("Attempting to connect to the robot...", "neutral", 3000);
         }
         try {
             Socket.websocket = new WebSocket(WhiteboardSettings.websocketURL);
@@ -48,14 +48,14 @@ var Socket = {
         Socket.websocket.onopen = () => {
             Socket.connecting = false;
             Socket.connected = true;
-            Notify.createNotice("Connected to the RoboRio!", "positive", 8000);
+            Notify.createNotice("Connected to the robot!", "positive", 8000);
             document.getElementById("status-container").style.backgroundColor = "limegreen";
             document.getElementById("status").innerHTML = "connected";
             Socket.sendLayout();
         };
         Socket.websocket.onmessage = (event) => { Socket.handleMessage(event.data) };
         if (recursion < 1) {
-            Socket.websocket.onerror = () => { Notify.createNotice("Could not connect to the RoboRio!", "negative", 8000); Socket.openSocket(recursion + 1); console.clear() };
+            Socket.websocket.onerror = () => { Notify.createNotice("Could not connect to the robot!", "negative", 8000); Socket.openSocket(recursion + 1); console.clear() };
         } else {
             Socket.websocket.onerror = () => { Socket.openSocket(recursion + 1); console.clear() }
         }
@@ -73,7 +73,7 @@ var Socket = {
                 Whiteboard.getDraggableById(data.nodeID).setState(data.state);
             } catch {
                 console.warn(`The server attemped to set the state of a node with id "${data.nodeID}," which does not exist.`);
-                Notify.createNotice("Received invalid message from the RoboRio", "negative", 3000);
+                Notify.createNotice("Received invalid message from the robot", "negative", 3000);
             }
         }
     },

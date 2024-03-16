@@ -203,9 +203,10 @@ var Whiteboard = {
             this.context.font = "15px Roboto";
             this.context.fillText("x: " + botX, 10, 20);
             this.context.fillText("y: " + botY, 10, 40);
-            this.context.fillText("heading: " + Positioning.round((heading * 180 / Math.PI) % 360, 2) + "°", 10, 60);                 
-            this.drawRect(new Positioning.Pose2d(new Positioning.Vector2d(botX * 1000, botY * 1000), heading), 50, 50, "#3973ac");
-            this.drawArrow(new Positioning.Pose2d(new Positioning.Vector2d(botX * 1000, botY * 1000), heading), 40, 40, "white");
+            this.context.fillText("heading: " + Positioning.round((heading * 180 / Math.PI) % 360, 2) + "°", 10, 60);         
+            let multiplier = 5;        
+            this.drawRect(new Positioning.Pose2d(new Positioning.Vector2d(botX * multiplier, botY * multiplier), heading), 50, 50, "#3973ac");
+            this.drawArrow(new Positioning.Pose2d(new Positioning.Vector2d(botX * multiplier, botY * multiplier), heading), 40, 40, "white");
         }
 
         transformCanvasCoordinates(pose) {
