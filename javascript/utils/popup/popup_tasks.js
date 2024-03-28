@@ -37,7 +37,7 @@ var PopupTasks = {
 
     setType: function (type) {
         Whiteboard.logChange();
-        Whiteboard.currentDraggable.setType(type);
+        Whiteboard.currentDraggable.configureType(type);
         Popup.closePopup(document.getElementById("type-setter"));
     },
 
@@ -74,6 +74,14 @@ var PopupTasks = {
         width = parseInt(size[0]);
         height = parseInt(size[1]);
         Whiteboard.currentDraggable.setStreamSize(new Positioning.Vector2d(width, height));
+        Popup.closePopup(popup);
+    },
+
+    setFontSize: function(event) {
+        Whiteboard.logChange();
+        let popup = Popup.getPopupFromChild(event.target);
+        let size = popup.getElementsByClassName("popup-input")[0].value;
+        Whiteboard.currentDraggable.setFontSize(size);
         Popup.closePopup(popup);
     },
 
@@ -124,6 +132,12 @@ var PopupTasks = {
         }
         Popup.closePopup(popup);
     },
+
+    configurePathPoint: function(event) {
+        let popup = Popup.getPopupFromChild(event.target);
+        let radius = parseFloat(Popup.getInput(""));
+        Popup.closePopup(popup);
+    }
 
 }
 

@@ -183,7 +183,7 @@ var Popup = {
             inputs[i].addEventListener("keydown", (event) => { if (event.key === "Enter" && document.activeElement === inputs[i]) Popup.getPopupFromChild(event.target).getElementsByClassName("apply")[0].click() });
         }
         Popup.popupBackground = document.getElementById("popup-background");
-        popupOpeners = document.querySelectorAll("[popup]"); //grabs all elements with a popup attribute
+        popupOpeners = document.querySelectorAll("[popup]"); // Grabs all elements with a popup attribute
         for (let i = 0; i < popupOpeners.length; i++) {
             popupOpeners[i].addEventListener("click", () => { Popup.openPopup(popupOpeners[i].getAttribute("popup")) })
         }

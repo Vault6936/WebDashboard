@@ -13,8 +13,17 @@ var Positioning = {
             this.x = parseFloat(x);
             this.y = parseFloat(y);
         }
+
+        add(vector) {
+            return new Positioning.Vector2d(this.x + vector.x, this.y + vector.y);
+        }
+
         equals(vector) {
             return parseInt(vector.x) == parseInt(this.x) && parseInt(vector.y) == parseInt(this.y);
+        }
+
+        static from(obj) {
+            return new Positioning.Vector2d(obj.x, obj.y);
         }
     },
 

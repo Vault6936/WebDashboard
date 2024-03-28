@@ -2,11 +2,15 @@
     z-index: 1;
     position: absolute;
     display: inline-block;
-    padding: 5px;
     box-sizing: border-box;
     overflow: hidden;
     font-family: Roboto;
     font-size: 15px;
+    user-select: none;
+    -webkit-user-drag: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 .whiteboard-label {
@@ -106,6 +110,26 @@
     user-select: none;
 }
 
+.path {
+    user-select: none;
+    -webkit-user-drag: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    
+}
+
+.path-point {
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    background-color: #f5770a;
+    position: fixed;
+}
+
 .canvas {
     background-color: white;
+    position: absolute;
+    top: 0px;
+    left: 0px;
 }

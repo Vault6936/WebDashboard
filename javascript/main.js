@@ -43,6 +43,7 @@ function initialize() { //This is called when the body portion of the html docum
     Popup.generateSimpleInputPopup("id-changer", PopupTasks.changeID, new Popup.PopupInput("Enter draggable id", "draggable id"));
     Popup.generateSimpleInputPopup("stream-url-setter", PopupTasks.setStreamURL, new Popup.PopupInput("http://roborio-TEAM-frc.local:1181/?action=stream", "set stream url", "stream-url-input"));
     Popup.generateSimpleInputPopup("stream-size-setter", PopupTasks.setStreamSize, new Popup.PopupInput("width x height", "stream size"));
+    Popup.generateSimpleInputPopup("text-telemetry-font-size-setter", PopupTasks.setFontSize, new Popup.PopupInput("15", "font size"));
 
     Popup.setOnOpen("stream-url-setter", () => Popup.getInput("stream-url-input").value = Whiteboard.currentDraggable.typeSpecificData.streamURL);
 
@@ -60,6 +61,7 @@ function initialize() { //This is called when the body portion of the html docum
 
     Popup.populateVerticalInputs(document.getElementById("draggable-position-inputs"), new Popup.PopupInput("0", "x position", "x-pose-input"), new Popup.PopupInput("0", "y position", "y-pose-input"));
     Popup.populateVerticalInputs(document.getElementById("import-json-info"), new Popup.PopupInput("import", "layout name", "import-layout-name"), new Popup.PopupInput("", "layout JSON", "import-layout-json"));
+    Popup.populateVerticalInputs(document.getElementById("point-configure-inputs"), new Popup.PopupInput("", "radius", "path-point-radius"));
 
     Popup.initializePopups();
 
@@ -132,43 +134,61 @@ function generateContextMenu(event) {
     let whiteboard = document.getElementById("whiteboard");
     let container = document.createElement("div");
     container.id = "menu-container";
+
     let draggableElement = Whiteboard.getDraggableAncestor(event.target);
-    console.log(draggableElement);
     if (draggableElement) {
         let draggable = Whiteboard.draggableRegistry[Whiteboard.getDraggableIndex(draggableElement)]
         Whiteboard.currentDraggable = draggable;
-        if (draggable.type == Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
-            generateContextMenuButton(container, "copy data", () => {navigator.clipboard.writeText(draggable.state); Notify.createNotice("copied", "positive", 3000)});
-        }
-        if (Whiteboard.editingMode) {
-            generateContextMenuButton(container, "remove", () => { if (Whiteboard.editingMode) { Whiteboard.logChange(); draggable.delete() } });
-            generateContextMenuButton(container, "send to front", () => { Whiteboard.logChange(); draggable.setLayer(Whiteboard.draggableRegistry.length - 1) });
-            generateContextMenuButton(container, "send to back", () => { Whiteboard.logChange(); draggable.setLayer(0) });
-            generateContextMenuButton(container, "set id", () => Popup.openPopup("id-changer"));
-            if (draggable.type !== Whiteboard.WhiteboardDraggable.Types.TOGGLE && draggable.type !== Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
-            generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
-            generateContextMenuButton(container, "set position", () => Popup.openPopup("position-setter"));
-            if (draggable.type == Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
-                generateContextMenuButton(container, "define selectables", () => Popup.openPopup("draggable-selector-creator"));
+
+        if (!event.target.classList.contains("path-point")) {
+            if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY)) {
+                generateContextMenuButton(container, "copy data", () => {navigator.clipboard.writeText(draggable.configuration.state); Notify.createNotice("copied", "positive", 3000)});
             }
-            if (draggable.type == Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
-                generateContextMenuButton(container, "set stream url", () => Popup.openPopup("stream-url-setter"));
-                generateContextMenuButton(container, "set stream size", () => Popup.openPopup("stream-size-setter"));
+            if (Whiteboard.editingMode) {
+                generateContextMenuButton(container, "remove", () => { if (Whiteboard.editingMode) { Whiteboard.logChange(); draggable.delete() } });
+                generateContextMenuButton(container, "send to front", () => { Whiteboard.logChange(); draggable.setLayer(Whiteboard.draggableRegistry.length - 1) });
+                generateContextMenuButton(container, "send to back", () => { Whiteboard.logChange(); draggable.setLayer(0) });
+                generateContextMenuButton(container, "set id", () => Popup.openPopup("id-changer"));
+                if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY)) {
+                    generateContextMenuButton(container, "set font size", () => Popup.openPopup("text-telemetry-font-size-setter"));
+                }
+                if (!draggable.isType(Whiteboard.WhiteboardDraggable.Types.TOGGLE) && !draggable.isType(Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY)) {
+                    generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
+                }
+                generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
+                generateContextMenuButton(container, "set position", () => Popup.openPopup("position-setter"));
+                if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.SELECTOR)) {
+                    generateContextMenuButton(container, "define selectables", () => Popup.openPopup("draggable-selector-creator"));
+                }
+                if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM)) {
+                    generateContextMenuButton(container, "set stream url", () => Popup.openPopup("stream-url-setter"));
+                    generateContextMenuButton(container, "set stream size", () => Popup.openPopup("stream-size-setter"));
+                }
+                if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.PATH)) {
+                    generateContextMenuButton(container, "add path point", () => draggable.addPathPoint());
+                    generateContextMenuButton(container, "save to robot", () => draggable.sendPath());
+                }
+                generateContextMenuButton(container, "set element type", () => Popup.openPopup("type-setter"));
+                generateContextMenuButton(container, "duplicate", () => Whiteboard.duplicate(Whiteboard.draggableRegistry[Whiteboard.getDraggableIndex(Whiteboard.currentDraggable.div)]));
             }
-            generateContextMenuButton(container, "set element type", () => Popup.openPopup("type-setter"));
-            generateContextMenuButton(container, "duplicate", () => Whiteboard.duplicate(Whiteboard.draggableRegistry[Whiteboard.getDraggableIndex(Whiteboard.currentDraggable.div)]));
-        }
-    } else if (event.target.id == "whiteboard-border") {
-        generateContextMenuButton(container, "set whiteboard size", () => { Popup.openPopup("whiteboard-size-setter") });
-    } else if (event.target.classList.contains("selectable")) {
-        if (event.target.classList.contains("layout-selectable")) {
-            Popup.selected = event.target;
-            if (event.target.innerHTML !== "default") {
-                generateContextMenuButton(container, "delete", () => { Load.targetLayout = event.target.innerHTML; Popup.openPopup("remove-layout") });
-                generateContextMenuButton(container, "rename", () => { Popup.openPopup("layout-renamer") });
-                generateContextMenuButton(container, "set as default", () => { Load.setAsDefault(`webdashboard:${event.target.innerHTML}`) });
+        } else if (event.target.id == "whiteboard-border") {
+            generateContextMenuButton(container, "set whiteboard size", () => { Popup.openPopup("whiteboard-size-setter") });
+        } else if (event.target.classList.contains("selectable")) {
+            if (event.target.classList.contains("layout-selectable")) {
+                Popup.selected = event.target;
+                if (event.target.innerHTML !== "default") {
+                    generateContextMenuButton(container, "delete", () => { Load.targetLayout = event.target.innerHTML; Popup.openPopup("remove-layout") });
+                    generateContextMenuButton(container, "rename", () => { Popup.openPopup("layout-renamer") });
+                    generateContextMenuButton(container, "set as default", () => { Load.setAsDefault(`webdashboard:${event.target.innerHTML}`) });
+                }
+                generateContextMenuButton(container, "export json", () => { Load.exportJSON(`webdashboard:${event.target.innerHTML}`) });
             }
-            generateContextMenuButton(container, "export json", () => { Load.exportJSON(`webdashboard:${event.target.innerHTML}`) });
+        } else {
+            Whiteboard.currentPathPoint = draggable.getPathPointObject();
+            generateContextMenuButton(container, "remove", () => draggable.removePathPoint(event.target));
+            generateContextMenuButton(container, "add after", (() => {}));
+            generateContextMenuButton(container, "add before", () => {});
+            generateContextMenuButton(container, "configure", () => Popup.openPopup("path-point-configuration"));
         }
     }
     document.body.appendChild(container);

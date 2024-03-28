@@ -55,9 +55,9 @@ var Socket = {
         };
         Socket.websocket.onmessage = (event) => { Socket.handleMessage(event.data) };
         if (recursion < 1) {
-            Socket.websocket.onerror = () => { Notify.createNotice("Could not connect to the robot!", "negative", 8000); Socket.openSocket(recursion + 1); console.clear() };
+            Socket.websocket.onerror = () => { Notify.createNotice("Could not connect to the robot!", "negative", 8000); Socket.openSocket(recursion + 1); /*console.clear()*/ };
         } else {
-            Socket.websocket.onerror = () => { Socket.openSocket(recursion + 1); console.clear() }
+            Socket.websocket.onerror = () => { Socket.openSocket(recursion + 1); /*console.clear()*/ }
         }
     },
 

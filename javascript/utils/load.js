@@ -172,16 +172,8 @@ var Load = {
         if (json.border.height != null) border.style.height = json.border.height;
 
         for (let i = 0; i < json.draggableData.length; i++) {
-            let name = json.draggableData[i].name;
-            let position = new Positioning.Vector2d(json.draggableData[i].position.x, json.draggableData[i].position.y);
-            let size = json.draggableData[i].size;
-            let color = json.draggableData[i].color;
-            let layer = json.draggableData[i].layer;
-            let type = json.draggableData[i].type;
-            let id = json.draggableData[i].id;
-            let state = json.draggableData[i].state;
-            let typeSpecificData = json.draggableData[i].typeSpecificData;
-            Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(name, position, size, color, layer, type, id, state, typeSpecificData));
+            let configuration = json.draggableData[i];
+            Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(configuration));
         }
     },
 

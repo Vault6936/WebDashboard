@@ -1,6 +1,91 @@
+window.Draggable =  class {
+    draggable;
+    draggingNode;
+    position;
+    onDrag = () => {};
+
+    constructor(draggable) {
+        this.draggable = draggable;
+        this.draggingNode = false;
+
+        this.setDraggablePosition = this.setDraggablePosition.bind(this);
+        this.mouseDrag = this.mouseDrag.bind(this);
+        this.stopDragging = this.stopDragging.bind(this);
+
+        this.draggable.onmousedown = function (event) {
+            event.stopPropagation();
+            if (Whiteboard.editingMode && event.button === 0) {
+                if (this.draggingNode) {
+                    this.stopDragging();
+                } else {
+                    Whiteboard.dragOffset = new Positioning.Vector2d(Positioning.mousePosition.x - this.draggable.getBoundingClientRect().left, Positioning.mousePosition.y - this.draggable.getBoundingClientRect().top);
+                    addEventListener("mousemove", this.mouseDrag);
+                    Whiteboard.logChange();
+                    this.draggingNode = true;
+                }
+            }
+        }.bind(this);
+        onmouseup = this.stopDragging;
+        [document, window, this.draggable].forEach(((object) => { object.onpointerup = this.stopDragging; object.onmouseup = this.stopDragging }).bind(this));
+    }
+
+    mouseDrag(event) {
+        event.stopPropagation();
+        this.setDraggablePosition(Positioning.mousePosition.add(new Positioning.Vector2d(-Whiteboard.dragOffset.x, -Whiteboard.dragOffset.y)));
+        this.onDrag();
+    }
+
+    setDraggablePosition(pose) {
+        const x = Positioning.clamp(pose.x, 25, this.whiteboard.clientWidth - this.div.clientWidth - 25);
+        const y = Positioning.clamp(pose.y, 65, this.whiteboard.clientHeight - this.div.clientHeight - 50);
+        this.position = new Positioning.Vector2d(x, y);
+        this.draggable.style.left = Positioning.toHTMLPositionPX(x);
+        this.draggable.style.top = Positioning.toHTMLPositionPX(y);
+    }
+
+    stopDragging() {
+        removeEventListener("mousemove", this.mouseDrag);
+        Whiteboard.dragOffset = new Positioning.Vector2d(0, 0);
+        this.draggingNode = false;
+    }
+};
+
+window.PathPoint = class extends Draggable {    
+
+    parentDraggable;
+    relativePosition;
+    div;
+
+    fieldVector; // That is, the position in field coordinates
+    followRadius;
+    targetFollowRotation; // In radians
+    targetEndRotation; // In radians
+    maxVelocity;
+
+
+    constructor(parentDraggable, relativePosition) {
+        let div = document.createElement("div");
+        super(div);
+        this.div = div;
+        this.div.classList.add("path-point");
+        this.whiteboard = document.getElementById("whiteboard");
+        this.parentDraggable = parentDraggable;
+        this.parentDraggable.draggable.appendChild(this.div);
+        this.relativePosition = (relativePosition == null || relativePosition == undefined ? new Positioning.Vector2d(0, 0) : relativePosition);
+        super.setDraggablePosition(this.relativePosition.add(this.parentDraggable.position));
+        super.onDrag = (function() {
+            this.relativePosition = this.position.add(new Positioning.Vector2d(-parentDraggable.position.x, -parentDraggable.position.y));
+        }).bind(this);
+    }
+
+    remove() {
+        this.parentDraggable.draggable.removeChild(this.div);
+    }
+}
+
 var Whiteboard = {
 
-    WhiteboardDraggable: class {
+    WhiteboardDraggable: class extends Draggable {
 
         static Types = {
             BUTTON: "button",
@@ -12,24 +97,37 @@ var Whiteboard = {
             CAMERA_STREAM: "camera stream",
             GRAPH: "position graph",
             LABEL: "label",
+            PATH: "path",
         };
 
-        name;
-        position;
-        size;
-        color;
-        layer;
-        type;
-        id;
-        state;
-        typeSpecificData;
+        arrayIndex;
+        pathPoints = [];
 
-        constructor(name, position, size, color, layer, type, id, state, typeSpecificData) {
+        configuration = {
+            name: undefined,
+            position: new Positioning.Vector2d(50, 50),
+            size: new Positioning.Vector2d(100, 100),
+            color: undefined,
+            layer: undefined,
+            type: Whiteboard.WhiteboardDraggable.Types.BUTTON,
+            id: undefined,
+            state: undefined,
+            streamURL: undefined,
+            streamSize: undefined,
+            selectableNames: undefined,
+            fontSize: undefined,
+            pathPoints: [],
+        };
+
+        constructor(configuration) {
+            let div = document.createElement("div");
+            div.setAttribute("draggable", false);
+            super(div);
             this.bindMethods();
             this.whiteboard = document.getElementById("whiteboard");
 
             // #region draggable div
-            this.div = document.createElement("div");
+            this.div = div;
             this.selectorContainer = document.createElement("div");
             this.selectorContainer.classList.add("draggable-selectable-container");
             this.div.appendChild(this.selectorContainer);
@@ -49,47 +147,49 @@ var Whiteboard = {
             this.context = this.canvas.getContext("2d");
             this.context.imageSmoothingEnabled = false;
             this.div.appendChild(this.canvas);
-            this.container = document.createElement("span");
+            this.fieldImg = document.createElement("img");
+            this.fieldImg.setAttribute("draggable", false);
+            this.fieldImg.classList.add("path");
+            this.fieldImg.setAttribute("draggable", false);
+            this.div.appendChild(this.fieldImg);
+            this.container = document.createElement("div");
             this.label = document.createElement("input");
             if (!Whiteboard.editingMode) this.label.readOnly = true;
             this.div.className = "whiteboard-draggable";
+            this.onDrag = (function() {
+                this.configuration.position = this.position;
+                this.updateChildPositions();
+            }).bind(this);
             // #endregion 
 
             // #region declare class fields
-            this.name = name;
-            this.position = position;
-            this.setSize(size);
-            this.setColor(color);
-            this.setLayer(layer, false);
-            if (typeSpecificData == undefined) this.typeSpecificData = {}; else this.typeSpecificData = typeSpecificData;
-            this.setStreamSize(this.typeSpecificData.streamSize);
-            this.selectableGroup = null;
-            this.setType(type);
-            this.setState(state);
-            this.arrayIndex = 0;
+            this.configuration.type = configuration.type; // initialize the type variable
+
             this.updateIndex(Whiteboard.draggableRegistry.length);
-            this.setId(id);
+            this.configuration.name = configuration.name;
+            this.configuration.position = configuration.position;
+            this.setSize(configuration.size);
+            this.setFontSize(configuration.fontSize);
+            this.setColor(configuration.color);
+            this.setStreamSize(configuration.streamSize);
+            this.selectableGroup = null;
+            this.configuration.pathPoints = configuration.pathPoints;
+
+
+            this.configureType(configuration.type, true);
+            this.setId(configuration.id); // Once the type is configured, set the id and the state
+            this.setState(configuration.state);
+            this.setLayer(configuration.layer, false); // After everything is displayed, set the layer
+
             // #endregion
 
             // #region dragging functionality
-            this.draggingDiv = false;
-            this.div.onmousedown = function (event) {
-                if (Whiteboard.editingMode && event.button === 0) {
-                    if (this.draggingDiv) {
-                        this.stopDragging();
-                    } else {
-                        Whiteboard.dragOffset = new Positioning.Vector2d(Positioning.mousePosition.x - this.div.getBoundingClientRect().left, Positioning.mousePosition.y - this.div.getBoundingClientRect().top);
-                        addEventListener("mousemove", this.mouseDrag);
-                        Whiteboard.logChange();
-                        this.draggingDiv = true;
-                    }
-                }
-            }.bind(this);
-            [document, window, this.div].forEach(((thing) => { thing.onpointerup = this.stopDragging; thing.onmouseup = this.stopDragging }).bind(this));
+ 
             this.div.onmouseover = (event) => {
-                if (Whiteboard.editingMode) { event.target.style.cursor = "move" } else if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON || this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) { event.target.style.cursor = "pointer"; if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) event.target.style.background = WhiteboardSettings.Themes.selectedTheme.attributes.nodeHover } else { event.target.style.cursor = "auto" }
+                if (Whiteboard.editingMode) { event.target.style.cursor = "move" } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.BUTTON || this.configuration.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) { event.target.style.cursor = "pointer"; if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) event.target.style.background = WhiteboardSettings.Themes.selectedTheme.attributes.nodeHover } else { event.target.style.cursor = "auto" }
             }
-            this.div.onmouseleave = (event) => { event.target.style.background = this.color }
+
+            this.div.onmouseleave = (event) => { event.target.style.background = this.configuration.color }
             this.div.dispatchEvent(new Event("mouseleave")); //If this event isn't dispatched, the program might glitch and cause the element to think the mouse is over it
             // #endregion
 
@@ -100,25 +200,25 @@ var Whiteboard = {
             this.label.className = "whiteboard-label";
             this.label.style.background = WhiteboardSettings.Themes.selectedTheme.attributes.draggableLabelColor;
             this.label.placeholder = "Untitled";
-            this.label.value = this.name;
+            this.label.value = this.configuration.name;
             this.container.appendChild(this.label);
             Whiteboard.dragOffset = new Positioning.Vector2d(0, 0);
-            this.setPosition(this.position);
+            this.setPosition(this.configuration.position);
             this.div.onclick = this.handleClick;
             // #endregion
         }
 
         bindMethods() {
-            this.setToggleStatus = this.setState.bind(this);
-            this.sendDataToRio = this.handleClick.bind(this);
-            this.mouseDrag = this.mouseDrag.bind(this);
-            this.stopDragging = this.stopDragging.bind(this);
+            this.isType = this.isType.bind(this);
+            this.setState = this.setState.bind(this);
+            this.handleClick = this.handleClick.bind(this);
             this.setName = this.setName.bind(this);
             this.setPosition = this.setPosition.bind(this);
+            this.updateChildPositions = this.updateChildPositions.bind(this);
             this.setSize = this.setSize.bind(this);
             this.setColor = this.setColor.bind(this);
             this.setLayer = this.setLayer.bind(this);
-            this.setType = this.setType.bind(this);
+            this.configureType = this.configureType.bind(this);
             this.setId = this.setId.bind(this);
             this.setStreamURL = this.setStreamURL.bind(this);
             this.setStreamSize = this.setStreamSize.bind(this);
@@ -129,34 +229,39 @@ var Whiteboard = {
             this.generateSelectorHTML = this.generateSelectorHTML.bind(this);
             this.getShallowCopy = this.getShallowCopy.bind(this);
             this.transformCanvasCoordinates = this.transformCanvasCoordinates.bind(this);
+            this.setFontSize = this.setFontSize.bind(this);
+            this.addPathPoint = this.addPathPoint.bind(this);
+            this.drawPathLines = this.drawPathLines.bind(this);
+            this.getPathPointsSimpleObj = this.getPathPointsSimpleObj.bind(this);
+            this.removePathPoint = this.removePathPoint.bind(this);
         }
 
         generateSelectorHTML(selectableNames) {
             if (selectableNames == undefined) return;
-            this.typeSpecificData.selectableNames = selectableNames;
+            this.configuration.selectableNames = selectableNames;
             this.selectorContainer.innerHTML = "";
             this.selectableGroup = new Popup.SelectableGroup();
             for (let i = 0; i < selectableNames.length; i++) {
-                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => { this.state = selectableNames[i]; this.sendState() }).bind(this), WhiteboardSettings.Themes.selectedTheme.draggableUnselect, WhiteboardSettings.Themes.selectedTheme.draggableSelect, true));
+                this.selectableGroup.add(new Popup.Selectable(selectableNames[i], (() => { this.configuration.state = selectableNames[i]; this.sendState() }).bind(this), WhiteboardSettings.Themes.selectedTheme.draggableUnselect, WhiteboardSettings.Themes.selectedTheme.draggableSelect, true));
             }
             this.selectableGroup.generateHTML(this.selectorContainer);
         }
 
         setState(state) {
             try {
-                this.state = state;
-                if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE || this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
-                    this.state = String(this.state);
-                    if (this.state === "true") {
+                this.configuration.state = state;
+                if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE || this.configuration.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
+                    this.configuration.state = String(this.configuration.state);
+                    if (this.configuration.state === "true") {
                         this.setColor("limegreen");
                     } else {
                         this.setColor("red");
                     }
-                } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
+                } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
                     this.textContainer.innerHTML = state;
-                } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) {
+                } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) {
                     this.textField.innerHTML = state;
-                } else if (this.type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
+                } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
                     let toSelect = null;
                     for (let i = 0; i < this.selectableGroup.selectables.length; i++) {
                         if (this.selectableGroup.selectables[i].name == state) {
@@ -165,8 +270,8 @@ var Whiteboard = {
                     }
                     if (toSelect == null) throw new Error("Selector node does not have requested state");
                     this.selectableGroup.select(toSelect);
-                    this.state = toSelect.name;
-                } else if (this.type === Whiteboard.WhiteboardDraggable.Types.GRAPH) {
+                    this.configuration.state = toSelect.name;
+                } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.GRAPH) {
                     let x = 0.00;
                     let y = 0.00;
                     let heading = 0.00;
@@ -185,19 +290,30 @@ var Whiteboard = {
             }
         }
 
+        drawPathLines() {
+            this.context.clearRect(0, 0, (this.configuration.size.x), (this.configuration.size.y));
+            for (let i = 0; i < this.pathPoints.length - 1; i++) {
+                let point1 = this.pathPoints[i]; 
+                let vector1 = point1.position.add(new Positioning.Vector2d(point1.div.getBoundingClientRect().width / 2, point1.div.getBoundingClientRect().height / 2));
+                let point2 = this.pathPoints[i + 1];
+                let vector2 = point2.position.add(new Positioning.Vector2d(point2.div.getBoundingClientRect().width / 2, point2.div.getBoundingClientRect().height / 2));
+                this.drawLine(vector1.add(new Positioning.Vector2d(-this.position.x, -this.position.y)), vector2.add(new Positioning.Vector2d(-this.position.x, -this.position.y)), "#f5770a", 5);
+            }
+        }
+
         drawGraph(botX, botY, heading) {
             const x = 0;
             const y = 0;
-            this.context.clearRect(0, 0, (this.size.x - 10), (this.size.y - 10));
+            this.context.clearRect(0, 0, (this.configuration.size.x), (this.configuration.size.y));
             let spacing = 25;
             let lineColor = "#f0f0f5";
-            for (let i = 0; i < Math.ceil((this.size.y - 10) / spacing); i++) {
-                this.drawLine(new Positioning.Vector2d(-(this.size.x - 10) / 2, spacing * i), new Positioning.Vector2d((this.size.x - 10) / 2, spacing * i), lineColor);
-                this.drawLine(new Positioning.Vector2d(-(this.size.x - 10) / 2, -spacing * (i + 1)), new Positioning.Vector2d((this.size.x - 10) / 2, -spacing * (i + 1)), lineColor);
+            for (let i = 0; i < Math.ceil((this.configuration.size.y) / spacing); i++) {
+                this.drawLineTransformed(new Positioning.Vector2d(-(this.configuration.size.x) / 2, spacing * i), new Positioning.Vector2d((this.configuration.size.x) / 2, spacing * i), lineColor);
+                this.drawLineTransformed(new Positioning.Vector2d(-(this.configuration.size.x) / 2, -spacing * (i + 1)), new Positioning.Vector2d((this.configuration.size.x) / 2, -spacing * (i + 1)), lineColor);
            }
-            for (let i = 0; i < Math.ceil((this.size.x - 10) / spacing); i++) {
-                this.drawLine(new Positioning.Vector2d(spacing * i, -(this.size.y - 10) / 2), new Positioning.Vector2d(spacing * i, (this.size.y - 10) / 2), lineColor);
-                this.drawLine(new Positioning.Vector2d(-spacing * (i + 1), -(this.size.y - 10) / 2), new Positioning.Vector2d(-spacing * (i + 1), (this.size.y - 10) / 2), lineColor);
+            for (let i = 0; i < Math.ceil((this.configuration.size.x) / spacing); i++) {
+                this.drawLineTransformed(new Positioning.Vector2d(spacing * i, -(this.configuration.size.y) / 2), new Positioning.Vector2d(spacing * i, (this.configuration.size.y) / 2), lineColor);
+                this.drawLineTransformed(new Positioning.Vector2d(-spacing * (i + 1), -(this.configuration.size.y) / 2), new Positioning.Vector2d(-spacing * (i + 1), (this.configuration.size.y) / 2), lineColor);
             }
             this.context.fillStyle = "#000000";
             this.context.font = "15px Roboto";
@@ -212,8 +328,8 @@ var Whiteboard = {
         transformCanvasCoordinates(pose) {
             let x = pose.x;
             let y = pose.y;
-            x += (this.size.x - 10) / 2;
-            y = (this.size.y - 10) / 2 - y;
+            x += (this.configuration.size.x ) / 2;
+            y = (this.configuration.size.y) / 2 - y;
             return new Positioning.Vector2d(x, y); 
         }
 
@@ -223,15 +339,20 @@ var Whiteboard = {
             return new Positioning.Vector2d(x, y);
         }
 
-        drawLine(point1, point2, color="#000000") {
-            point1 = this.transformCanvasCoordinates(point1);
-            point2 = this.transformCanvasCoordinates(point2);
+        drawLine(point1, point2, color="#000000", lineWidth = 1) {
+            let oldLineWidth = this.context.lineWidth;
+            this.context.lineWidth = lineWidth;
             this.context.strokeStyle = color;
             this.context.beginPath();
             this.context.moveTo(point1.x, point1.y);
             this.context.lineTo(point2.x, point2.y);
             this.context.closePath();
             this.context.stroke();
+            this.context.lineWidth = oldLineWidth;
+        }
+
+        drawLineTransformed(point1, point2, color="#000000", lineWidth = 1) {
+            this.drawLine(this.transformCanvasCoordinates(point1), this.transformCanvasCoordinates(point2), color, lineWidth);
         }
 
         drawShape(vectors, color="#000000") {
@@ -281,8 +402,8 @@ var Whiteboard = {
         sendState() {
             let data = { message: {} };
             data.message.configuration = {
-                id: this.id,
-                state: this.state,
+                id: this.configuration.id,
+                state: this.configuration.state,
             };
             data.message.clientID = Socket.clientID;
             data.message.messageType = "node update";
@@ -292,15 +413,15 @@ var Whiteboard = {
 
         handleClick() {
             if (!Whiteboard.editingMode) {
-                if (this.type == Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
+                if (this.configuration.type == Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                     let state = "false";
-                    if (this.state == "false") state = true;
+                    if (this.configuration.state == "false") state = true;
                     this.setState(state);
                     this.sendState();
                 }
-                if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
+                if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
                     data = { message: {} };
-                    data.message.nodeID = this.id;
+                    data.message.nodeID = this.configuration.id;
                     data.message.clientID = Socket.clientID;
                     data.message.messageType = "click";
                     data = JSON.stringify(data);
@@ -309,73 +430,144 @@ var Whiteboard = {
             }
         }
 
-        mouseDrag() {
-            this.setPosition(Positioning.mousePosition);
-        }
-
-        stopDragging() {
-            removeEventListener("mousemove", this.mouseDrag);
-            Whiteboard.dragOffset = new Positioning.Vector2d(0, 0);
-            this.draggingDiv = false;
-        }
-
         setName(name) {
-            this.name = name;
+            this.configuration.name = name;
         }
 
         setPosition(pose) {
-            const x = Positioning.clamp((pose.x - Whiteboard.dragOffset.x), 25, this.whiteboard.clientWidth - this.div.clientWidth - 25);
-            const y = Positioning.clamp((pose.y - Whiteboard.dragOffset.y), 65, this.whiteboard.clientHeight - this.div.clientHeight - 50);
-            this.position = new Positioning.Vector2d(x, y);
-            this.div.style.left = Positioning.toHTMLPositionPX(x);
-            this.div.style.top = Positioning.toHTMLPositionPX(y);
+            if (pose == undefined || pose == null) {
+                pose == new Positioning.Vector2d(0, 0);
+            }
+            super.setDraggablePosition(pose);
+            this.configuration.position = this.position;
             const labelOffset = (this.div.clientWidth - (this.label.clientWidth + getBorderWidth(this.label))) / 2;
-            this.label.style.left = Positioning.toHTMLPositionPX(x + labelOffset);
-            this.label.style.top = Positioning.toHTMLPositionPX(y + this.div.clientHeight + 10);
+            this.label.style.left = Positioning.toHTMLPositionPX(this.position.x + labelOffset);
+            this.label.style.top = Positioning.toHTMLPositionPX(this.position.y + this.div.clientHeight + 10);
+        }
+
+        updateChildPositions() {
+            const labelOffset = (this.div.clientWidth - (this.label.clientWidth + getBorderWidth(this.label))) / 2;
+            this.label.style.left = Positioning.toHTMLPositionPX(this.position.x + labelOffset);
+            this.label.style.top = Positioning.toHTMLPositionPX(this.position.y + this.div.clientHeight + 10);
+            if (this.isType(Whiteboard.WhiteboardDraggable.Types.PATH)) {
+                for (let i = 0; i < this.pathPoints.length; i++) {
+                    this.pathPoints[i].setDraggablePosition(this.position.add(this.pathPoints[i].relativePosition));
+                }
+            }
+        }
+
+        isType(type) {
+            return this.configuration.type === type;
+        }
+
+        getPathPointsSimpleObj() {
+            let array = [];
+            for (let i = 0; i < this.pathPoints.length; i++) {
+                array.push({
+                    "relativePosition": this.pathPoints[i].relativePosition,
+                    "fieldVector": this.pathPoints[i].fieldVector,
+                });
+            }
+            return array;
+        }
+
+        getPathPointIndex(pathPointNode) {
+            let i = 0;
+            while (i < this.pathPoints.length) { // Since both are html objects, the triple equals operator will compare reference only
+                if (pathPointNode === this.pathPoints[i].draggable) {
+                    break;
+                }
+                i++;
+            }
+            return i;
+        }
+
+        getPathPointObject(pathPointNode) {
+            return this.pathPoints[this.getPathPointIndex(pathPointNode)];
+        }
+
+        removePathPoint(pathPointNode) {
+            Whiteboard.logChange();
+            let index = this.getPathPointIndex(pathPointNode);
+            try {
+                let temp = [];
+                for (let i = 0; i < this.pathPoints.length; i++) {
+                    if (i == index) {
+                        this.div.removeChild(pathPointNode);
+                    } else {
+                        temp.push(this.pathPoints[i]);
+                    }
+                }
+                this.pathPoints = temp;
+            } catch(error) {
+                console.log(error);
+            }
         }
 
         setSize(size) {
-            this.size = new Positioning.Vector2d(Positioning.clamp(size.x, 50, this.whiteboard.clientWidth * 0.75), Positioning.clamp(size.y, 50, this.whiteboard.clientHeight * 0.75));
-            this.div.style.width = Positioning.toHTMLPositionPX(this.size.x);
-            this.div.style.height = Positioning.toHTMLPositionPX(this.size.y);
-            this.label.style.width = Positioning.toHTMLPositionPX(Positioning.clamp(this.size.x * 0.75, 75, Number.POSITIVE_INFINITY));
+            this.configuration.size = new Positioning.Vector2d(Positioning.clamp(size.x, 50, this.whiteboard.clientWidth * 0.75), Positioning.clamp(size.y, 50, this.whiteboard.clientHeight * 0.75));
+            this.div.style.width = Positioning.toHTMLPositionPX(this.configuration.size.x);
+            this.div.style.height = Positioning.toHTMLPositionPX(this.configuration.size.y);
+            this.label.style.width = Positioning.toHTMLPositionPX(Positioning.clamp(this.configuration.size.x * 0.75, 75, Number.POSITIVE_INFINITY));
             Whiteboard.dragOffset = new Positioning.Vector2d(0, 0); // Calling setPosition() will take into account the dragOffset variable.  This isn't desirable here, so it is set to (0, 0)
-            this.setPosition(this.position); // If this method is not called, the position of the label relative to that of the div will be wrong
-            this.canvas.style.width = Positioning.toHTMLPositionPX(this.size.x - 10);
-            this.canvas.style.height = Positioning.toHTMLPositionPX(this.size.y - 10);
-            this.canvas.width = this.size.x - 10;
-            this.canvas.height = this.size.y - 10;
+            this.setPosition(this.configuration.position); // If this method is not called, the position of the label relative to that of the div will be wrong
+            if (this.isType(Whiteboard.WhiteboardDraggable.Types.GRAPH) || this.isType(Whiteboard.WhiteboardDraggable.Types.PATH)) {
+                if (this.isType(Whiteboard.WhiteboardDraggable.Types.GRAPH)) {
+                    this.drawGraph(0, 0, 0);
+                } else if (Whiteboard.WhiteboardDraggable.Types.PATH) {
+                    this.fieldImg.style.width = Positioning.toHTMLPositionPX(this.configuration.size.x);
+                    this.fieldImg.style.height = Positioning.toHTMLPositionPX(this.configuration.size.y);
+                }
+                this.canvas.style.width = Positioning.toHTMLPositionPX(this.configuration.size.x);
+                this.canvas.style.height = Positioning.toHTMLPositionPX(this.configuration.size.y);
+                this.canvas.width = this.configuration.size.x;
+                this.canvas.height = this.configuration.size.y;
+            }
+        }
+
+        setFontSize(size) {
+            if (size == undefined) {
+                size = 15;
+            }
+            this.configuration.fontSize = size;
+            this.textContainer.style.fontSize = Positioning.toHTMLPositionPX(size);
         }
 
         setColor(color) {
-            this.color = color;
+            this.configuration.color = color;
             this.div.style.background = color;
         }
 
         setLayer(layer, arrangeOthers = true) {
-            if (layer == this.layer) return;
-            this.div.style.zIndex = 1000 + 2 * layer;
-            this.label.style.zIndex = 1001 + 2 * layer;
-            if (this.layer != undefined && arrangeOthers) { // this.layer is equivalent to the prior draggable layer, and layer is equivalent to the new layer
-                if (layer > this.layer) {
-                    for (let i = layer; i > this.layer; i--) {
+            if (layer === this.configuration.layer) return;
+            this.div.style.zIndex = 1000 + layer;
+            this.label.style.zIndex = 1000 + layer;
+            if (this.configuration.layer != undefined && arrangeOthers) { // this.configuration.layer is equivalent to the prior draggable layer, and layer is equivalent to the new layer
+                if (layer > this.configuration.layer) {
+                    for (let i = layer; i > this.configuration.layer; i--) {
                         Whiteboard.draggableRegistry[i].setLayer(i - 1, false);
+                        Whiteboard.draggableRegistry[i].setLayer(i - 1, false);
+                        console.log(Whiteboard.draggableRegistry[i]);
                     }
                 } else {
-                    for (let i = layer; i < this.layer; i++) {
+                    for (let i = layer; i < this.configuration.layer; i++) {
                         Whiteboard.draggableRegistry[i].setLayer(i + 1, false);
                     }
                 }
             }
-            this.layer = layer;
+            this.configuration.layer = layer;
         }
 
         handleTyping() {
-            this.state = this.textField.value;
+            this.configuration.state = this.textField.value;
             this.sendState();
         }
 
-        setType(type) {
+        sendPath() {
+            Notify.createNotice(`sent path "${this.configuration.id}" to the control hub`, "positive", 4000);
+        }
+
+        configureType(type, newObject = false) {
             this.textContainer.style.display = "none";
             this.textField.style.display = "none";
             this.selectorContainer.innerHTML = "";
@@ -383,56 +575,76 @@ var Whiteboard = {
             this.stream.style.display = "none";
             this.stream.src = "";
             this.canvas.style.display = "none";
-            if (this.type != type && this.type != undefined) {
-                this.state = "";
+            this.fieldImg.style.display = "none";
+            clearInterval(this.drawPathLines, 20);
+            if (this.configuration.type != type && this.configuration.type != undefined) {
+                this.configuration.state = "";
             }
             if (type == undefined || type == null) {
                 type = "button";
             }
-            this.type = type;
-            if (this.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
+            this.configuration.type = type;
+            if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.BUTTON) {
 
-            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
+            } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.TOGGLE) {
                 this.setColor("red");
-            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
+            } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.SELECTOR) {
                 this.selectorContainer.style.display = "grid";
-                this.generateSelectorHTML(this.typeSpecificData.selectableNames);
-            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
+                this.generateSelectorHTML(this.configuration.selectableNames);
+            } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) {
                 this.textContainer.style.display = "block";
-                this.textContainer.innerHTML = this.state;
-            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) {
+                this.textContainer.innerHTML = this.configuration.state;
+            } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) {
                 this.textField.style.display = "block";
-                this.textField.innerHTML = this.state;
-            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
+                this.textField.innerHTML = this.configuration.state;
+            } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
                 this.setColor("red");
-            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
+            } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {
                 this.stream.style.display = "block";
-                this.setStreamURL(this.typeSpecificData.streamURL);
-            } else if (this.type === Whiteboard.WhiteboardDraggable.Types.GRAPH) {
+                this.setStreamURL(this.configuration.streamURL);
+            } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.GRAPH) {
                 this.setColor("gray");
                 this.canvas.style.display = "block";
+                this.canvas.style.backgroundColor = "white";
+                this.drawGraph(0, 0, 0);
+            } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.PATH) {
+                this.fieldImg.style.display = "block";
+                this.canvas.style.display = "block";
+                this.canvas.style.backgroundColor = "transparent";
+                this.fieldImg.setAttribute("src", "./game/centerstage.png");
+                if (newObject && this.configuration.pathPoints != undefined) {
+                    for (let i = 0; i < this.configuration.pathPoints.length; i++) {
+                        this.pathPoints.push(new PathPoint(this, Positioning.Vector2d.from(this.configuration.pathPoints[i].relativePosition)));
+                    }
+                }
+                setInterval(this.drawPathLines, 20);
             }
         }
 
         setStreamSize(size) {
             if (size == undefined) return;
-            this.typeSpecificData.streamSize = size;
+            this.configuration.streamSize = size;
             this.stream.style.width = Positioning.toHTMLPositionPX(size.x);
             this.stream.style.height = Positioning.toHTMLPositionPX(size.y);
         }
 
         setId(id) {
             if (id == null || id == "undefined" || id == "") {
-                id = `${this.type.replace(" ", "_")}_${this.arrayIndex}`;
+                id = `${this.configuration.type.replace(" ", "_")}_${this.arrayIndex}`;
             }
             this.div.id = id;
-            this.id = id;
-            if (Whiteboard.editingMode) this.div.title = `ID: ${this.id}`;
+            this.configuration.id = id;
+            if (Whiteboard.editingMode) this.div.title = `ID: ${this.configuration.id}`;
         }
 
         setStreamURL(url) {
-            this.typeSpecificData.streamURL = url;
+            this.configuration.streamURL = url;
             this.stream.src = url;
+        }
+
+        addPathPoint() {
+            Whiteboard.logChange();
+            this.pathPoints.push(new PathPoint(this));
         }
 
         updateIndex(index) {
@@ -455,17 +667,8 @@ var Whiteboard = {
         }
 
         getShallowCopy() {
-            let object = {};
-            object.name = this.name;
-            object.position = this.position;
-            object.size = this.size;
-            object.color = this.color;
-            object.layer = this.layer;
-            object.type = this.type;
-            object.id = this.id;
-            object.state = this.state;
-            object.typeSpecificData = this.typeSpecificData;
-            return object;
+            this.configuration.pathPoints = this.getPathPointsSimpleObj();
+            return this.configuration;
         }
     },
 
@@ -475,21 +678,40 @@ var Whiteboard = {
 
     addDefaultDraggable: function () {
         Whiteboard.logChange();
-        if (Whiteboard.editingMode) Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable("", new Positioning.Vector2d(100, 100), new Positioning.Vector2d(100, 100), "#0098cb", Whiteboard.draggableRegistry.length, "button", null));
+        let configuration = {
+            "name": "",
+            "position": new Positioning.Vector2d(100, 100),
+            "size": new Positioning.Vector2d(100, 100),
+            "color": "#0098cb",
+            "layer": Whiteboard.draggableRegistry.length,
+            "type": "button",
+            "id": null,
+        };
+        if (Whiteboard.editingMode) Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(configuration));
     },
 
     duplicate: function (draggable, keepPosition = false) {
         let position = new Positioning.Vector2d(0, 0);
         if (keepPosition) {
-            position = draggable.position;
+            position = draggable.configuration.position;
         }
         let name;
         try {
             name = this.getDraggableName(draggable);
         } catch {
-            name = draggable.name;
+            name = draggable.configuration.name;
         }
-        Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(name, position, draggable.size, draggable.color, Whiteboard.draggableRegistry.length, draggable.type, null, null, draggable.typeSpecificData));
+        let configuration = {
+            "name": name,
+            "position": position,
+            "size": draggable.configuration.size,
+            "color": draggable.configuration.color,
+            "layer": Whiteboard.draggableRegistry.length,
+            "type": draggable.configuration.type,
+            "state": "",
+            "id": null,
+        };
+        Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(configuration));
     },
 
     getDraggableAncestor: function (element, recursion) {
@@ -538,7 +760,7 @@ var Whiteboard = {
 
     getDraggableById: function (id) {
         for (let i = 0; i < Whiteboard.draggableRegistry.length; i++) {
-            if (Whiteboard.draggableRegistry[i].id === id) {
+            if (Whiteboard.draggableRegistry[i].configuration.id === id) {
                 return Whiteboard.draggableRegistry[i];
             }
         }
@@ -598,7 +820,7 @@ var Whiteboard = {
             editingToggle.innerHTML = "disable editing";
             Array.from(labels).forEach((label) => label.readOnly = false);
             Array.from(editModeOnlyBtns).forEach((button) => button.style.display = "block");
-            this.draggableRegistry.forEach((draggable) => { draggable.div.title = `ID: ${draggable.id}` });
+            this.draggableRegistry.forEach((draggable) => { draggable.div.title = `ID: ${draggable.configuration.id}` });
         }
         Whiteboard.editingMode = !Whiteboard.editingMode;
     },
@@ -606,6 +828,7 @@ var Whiteboard = {
     draggableRegistry: [],
     dragOffset: null,
     currentDraggable: null,
+    currentPathPoint: null,
     editingMode: false,
 };
 
