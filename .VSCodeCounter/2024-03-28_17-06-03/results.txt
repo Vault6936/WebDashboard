@@ -1,0 +1,91 @@
+Date : 2024-03-28 17:06:03
+Directory : c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard
+Total : 36 files,  3770 codes, 44 comments, 449 blanks, all 4263 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JavaScript |         10 |      1,855 |         12 |        233 |      2,100 |
+| CSS        |          5 |        693 |          0 |        122 |        815 |
+| XML        |         12 |        620 |          1 |          7 |        628 |
+| Java       |          3 |        214 |          1 |         42 |        257 |
+| JSON       |          1 |        170 |          0 |          1 |        171 |
+| HTML       |          1 |        137 |          0 |          5 |        142 |
+| Batch      |          1 |         39 |         29 |         22 |         90 |
+| Markdown   |          2 |         37 |          0 |         16 |         53 |
+| Properties |          1 |          5 |          1 |          1 |          7 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                           | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                              |         36 |      3,770 |         44 |        449 |      4,263 |
+| . (Files)                                                                                                                      |          3 |        174 |          0 |         21 |        195 |
+| images                                                                                                                         |          3 |        222 |          0 |          3 |        225 |
+| javascript                                                                                                                     |         10 |      1,855 |         12 |        233 |      2,100 |
+| javascript (Files)                                                                                                             |          1 |        193 |          2 |         30 |        225 |
+| javascript\utils                                                                                                               |          9 |      1,662 |         10 |        203 |      1,875 |
+| javascript\utils (Files)                                                                                                       |          7 |      1,327 |         10 |        156 |      1,493 |
+| javascript\utils\popup                                                                                                         |          2 |        335 |          0 |         47 |        382 |
+| samples                                                                                                                        |          1 |        170 |          0 |          1 |        171 |
+| style                                                                                                                          |          5 |        693 |          0 |        122 |        815 |
+| team                                                                                                                           |          3 |        229 |          1 |          4 |        234 |
+| test                                                                                                                           |         11 |        427 |         31 |         65 |        523 |
+| test\WebsocketTest                                                                                                             |         11 |        427 |         31 |         65 |        523 |
+| test\WebsocketTest (Files)                                                                                                     |          1 |         39 |         29 |         22 |         90 |
+| test\WebsocketTest\.idea                                                                                                       |          6 |        169 |          0 |          0 |        169 |
+| test\WebsocketTest\.idea (Files)                                                                                               |          4 |        154 |          0 |          0 |        154 |
+| test\WebsocketTest\.idea\codeStyles                                                                                            |          2 |         15 |          0 |          0 |         15 |
+| test\WebsocketTest\gradle                                                                                                      |          1 |          5 |          1 |          1 |          7 |
+| test\WebsocketTest\gradle\wrapper                                                                                              |          1 |          5 |          1 |          1 |          7 |
+| test\WebsocketTest\src                                                                                                         |          3 |        214 |          1 |         42 |        257 |
+| test\WebsocketTest\src\main                                                                                                    |          3 |        214 |          1 |         42 |        257 |
+| test\WebsocketTest\src\main\java                                                                                               |          3 |        214 |          1 |         42 |        257 |
+| test\WebsocketTest\src\main\java\com                                                                                           |          3 |        214 |          1 |         42 |        257 |
+| test\WebsocketTest\src\main\java\com\vault6936                                                                                 |          3 |        214 |          1 |         42 |        257 |
++--------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                                                                                       | language   | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\LICENSE.md                                                             | Markdown   |         16 |          0 |          4 |         20 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\README.md                                                              | Markdown   |         21 |          0 |         12 |         33 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\images\close-blue.svg                                                  | XML        |         74 |          0 |          1 |         75 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\images\close-dark.svg                                                  | XML        |         74 |          0 |          1 |         75 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\images\close-light.svg                                                 | XML        |         74 |          0 |          1 |         75 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\index.html                                                             | HTML       |        137 |          0 |          5 |        142 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\main.js                                                     | JavaScript |        193 |          2 |         30 |        225 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\event_checker.js                                      | JavaScript |         36 |          0 |          5 |         41 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\load.js                                               | JavaScript |        219 |          0 |         29 |        248 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\math_utils.js                                         | JavaScript |         40 |          0 |          8 |         48 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\notify.js                                             | JavaScript |         54 |          0 |          8 |         62 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\popup\popup.js                                        | JavaScript |        199 |          0 |         33 |        232 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\popup\popup_tasks.js                                  | JavaScript |        136 |          0 |         14 |        150 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\settings.js                                           | JavaScript |        122 |          0 |          9 |        131 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\socket.js                                             | JavaScript |         75 |          0 |          8 |         83 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\javascript\utils\whiteboard.js                                         | JavaScript |        781 |         10 |         89 |        880 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\samples\sampleLayout.json                                              | JSON       |        170 |          0 |          1 |        171 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\style\blue_theme.css                                                   | CSS        |         65 |          0 |         17 |         82 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\style\dark_theme.css                                                   | CSS        |         65 |          0 |         18 |         83 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\style\light_theme.css                                                  | CSS        |         65 |          0 |         18 |         83 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\style\main.css                                                         | CSS        |        380 |          0 |         52 |        432 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\style\whiteboard.css                                                   | CSS        |        118 |          0 |         17 |        135 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\team\banner.svg                                                        | XML        |         60 |          0 |          1 |         61 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\team\banner_2.svg                                                      | XML        |        113 |          0 |          1 |        114 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\team\logo.svg                                                          | XML        |         56 |          1 |          2 |         59 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\.idea\codeStyles\Project.xml                        | XML        |         10 |          0 |          0 |         10 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\.idea\codeStyles\codeStyleConfig.xml                | XML        |          5 |          0 |          0 |          5 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\.idea\gradle.xml                                    | XML        |         17 |          0 |          0 |         17 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\.idea\misc.xml                                      | XML        |          7 |          0 |          0 |          7 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\.idea\uiDesigner.xml                                | XML        |        124 |          0 |          0 |        124 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\.idea\vcs.xml                                       | XML        |          6 |          0 |          0 |          6 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\gradle\wrapper\gradle-wrapper.properties            | Properties |          5 |          1 |          1 |          7 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\gradlew.bat                                         | Batch      |         39 |         29 |         22 |         90 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\src\main\java\com\vault6936\DashboardLayout.java    | Java       |        120 |          0 |         22 |        142 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\src\main\java\com\vault6936\Main.java               | Java       |         14 |          0 |          2 |         16 |
+| c:\Users\stems\Desktop\FRC\Coding\Web Apps\WebDashboard\test\WebsocketTest\src\main\java\com\vault6936\WebdashboardServer.java | Java       |         80 |          1 |         18 |         99 |
+| Total                                                                                                                          |            |      3,770 |         44 |        449 |      4,263 |
++--------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+

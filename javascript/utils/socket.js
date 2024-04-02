@@ -1,13 +1,11 @@
 var Socket = {
     websocket: null,
-    websocketURL: "ws://10.69.36.2:5800",//"ws://127.0.0.1:5800",
-    clientID: Date.now(),
     lastMessageTimestamp: 0,
     connecting: false,
     connected: false,
 
     initializeSocket: function () {
-        setInterval(() => { try { Socket.websocket.send("ping") } catch { } }, 10000);
+        setInterval(() => { try { Socket.websocket.send("ping") } catch { } }, 5000);
         CustomEventChecker.addEventChecker(new CustomEventChecker.EventChecker("disconnected", Socket.disconnected, window));
         addEventListener("disconnected", () => {
             Socket.connected = false;
@@ -19,9 +17,11 @@ var Socket = {
     },
 
     sendLayout: function () {
-        data = { message: {} };
+        data = { 
+            message,
+            id, 
+        };
         data.message.layout = Load.getLayoutJSON().draggableData;
-        data.message.clientID = Socket.clientID;
         data.message.messageType = "layout state";
         data = JSON.stringify(data);
         Socket.sendData(data);
@@ -62,12 +62,12 @@ var Socket = {
     },
 
     disconnected: function () {
-        return Date.now() - Socket.lastMessageTimestamp > 15000;
+        return Date.now() - Socket.lastMessageTimestamp > 7500;
     },
 
     handleMessage: function (data) {
         Socket.lastMessageTimestamp = Date.now();
-        if (data != "pong" && !Whiteboard.editingMode) {
+        if (data.messageType === "update") {
             try {
                 data = JSON.parse(data);
                 Whiteboard.getDraggableById(data.nodeID).setState(data.state);
@@ -75,6 +75,8 @@ var Socket = {
                 console.warn(`The server attemped to set the state of a node with id "${data.nodeID}," which does not exist.`);
                 Notify.createNotice("Received invalid message from the robot", "negative", 3000);
             }
+        } else if (data.messageType === "notify") {
+            Notify.createNotice(data.message, data.type, parseInt(data.duration));
         }
     },
 

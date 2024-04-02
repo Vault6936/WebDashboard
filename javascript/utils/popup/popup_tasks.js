@@ -133,9 +133,49 @@ var PopupTasks = {
         Popup.closePopup(popup);
     },
 
+    populatePathPointInfo: function() {
+        let pathPoint = Whiteboard.currentPathPoint;
+        Popup.getInput("path-point-x").value = pathPoint.fieldVector.x;
+        Popup.getInput("path-point-y").value = pathPoint.fieldVector.y;
+        Popup.getInput("path-point-radius").value = pathPoint.followRadius;
+        Popup.getInput("target-follow-rotation").value = pathPoint.targetFollowRotation;
+        Popup.getInput("target-end-rotation").value = pathPoint.targetEndRotation;
+        Popup.getInput("max-velocity").value = pathPoint.maxVelocity;
+    },
+
+    populatePathTimeout() {
+        if (Whiteboard.currentDraggable.configuration.followTimeout != undefined)  {
+            document.getElementById("path-timeout-setter").getElementsByClassName("popup-input")[0].value = Whiteboard.currentDraggable.configuration.followTimeout;
+        }
+    },
+
+    setPathTimeout() {
+        let popup = Popup.getPopupFromChild(event.target);
+        let timeout = popup.getElementsByClassName("popup-input")[0].value;
+        Whiteboard.currentDraggable.configuration.followTimeout = timeout;
+        Popup.closePopup(popup);
+    },
+
     configurePathPoint: function(event) {
         let popup = Popup.getPopupFromChild(event.target);
-        let radius = parseFloat(Popup.getInput(""));
+        let pathPoint = Whiteboard.currentPathPoint;
+        let x = parseFloat(Popup.getInput("path-point-x").value);
+        let y = parseFloat(Popup.getInput("path-point-y").value);
+        let radius = parseFloat(Popup.getInput("path-point-radius").value);
+        let targetFollowRotation = parseFloat(Popup.getInput("target-follow-rotation").value);
+        if (targetFollowRotation == undefined) {
+            targetFollowRotation = null;
+        }
+        let targetEndRotation = parseFloat(Popup.getInput("target-end-rotation").value);
+        if (targetEndRotation == undefined) {
+            targetEndRotation = null;
+        }
+        let maxVelocity = parseFloat(Popup.getInput("max-velocity").value);
+        pathPoint.followRadius = radius;
+        pathPoint.targetFollowRotation = targetFollowRotation / 180 * 3.14159;
+        pathPoint.targetEndRotation = targetEndRotation / 180 * 3.14159;
+        pathPoint.maxVelocity = maxVelocity;
+        pathPoint.setFieldPosition(new Positioning.Vector2d(x, y));
         Popup.closePopup(popup);
     }
 

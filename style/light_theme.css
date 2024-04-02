@@ -4,11 +4,11 @@
 }
 
 .menu-light {
-    background-color: white;
+    background-color: #aeaeae;
 }
 
 .transition-light {
-    background-color: white;
+    background-color: #aeaeae;
 }
 
 .whiteboard-light {
@@ -16,13 +16,13 @@
 }
 
 .menu-button-light {
-    background-color: white;
-    color: #aeaeae;
+    background-color: #aeaeae;
+    color: white;
 }
 
 .menu-button-light:hover {
-    background-color: #aeaeae;
-    color: white;
+    background-color: white;
+    color: #aeaeae;
 }
 
 .layout-name-container-light {

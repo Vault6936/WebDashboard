@@ -1,6 +1,7 @@
 var WhiteboardSettings = {
-    teamNumber: 6936,
-    websocketURL: "ws://10.69.36.2:5800",
+    dashboardID: "dashboard_0",
+    teamNumber: 21865,
+    websocketURL: "ws://192.168.43.1:5837",
     defaultDraggable: null,
 
     Themes: {
@@ -82,6 +83,7 @@ var WhiteboardSettings = {
 
     saveSettings: function (event) {
         let popup = Popup.getPopupFromChild(event.target);
+        WhiteboardSettings.dashboardID = Popup.getInputValue("dashboard-id");
         WhiteboardSettings.teamNumber = Popup.getInputValue("team-number");
         WhiteboardSettings.websocketURL = Popup.getInputValue("websocket-url");
         localStorage.setItem("webdashboard-settings", JSON.stringify(WhiteboardSettings));
@@ -89,6 +91,7 @@ var WhiteboardSettings = {
     },
 
     populateSettingsInfo: function () {
+        Popup.setInputValue("dashboard-id", WhiteboardSettings.dashboardID);
         Popup.setInputValue("team-number", WhiteboardSettings.teamNumber);
         Popup.setInputValue("websocket-url", WhiteboardSettings.websocketURL);
     },

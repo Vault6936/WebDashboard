@@ -1,3 +1,14 @@
+window.hasValue = function(variable) {
+    return variable != undefined && variable != null;
+}
+
+window.getValue = function(value, defaultValue) {
+    if (hasValue(value)) {
+        return value;
+    }
+    return defaultValue;
+}
+
 window.Draggable =  class {
     draggable;
     draggingNode;
@@ -26,7 +37,8 @@ window.Draggable =  class {
             }
         }.bind(this);
         onmouseup = this.stopDragging;
-        [document, window, this.draggable].forEach(((object) => { object.onpointerup = this.stopDragging; object.onmouseup = this.stopDragging }).bind(this));
+        window.addEventListener("mouseup", this.stopDragging);
+        this.draggable.addEventListener("mouseup", this.stopDragging);
     }
 
     mouseDrag(event) {
@@ -52,6 +64,8 @@ window.Draggable =  class {
 
 window.PathPoint = class extends Draggable {    
 
+    static fieldLengthIn = 141.345;
+
     parentDraggable;
     relativePosition;
     div;
@@ -63,7 +77,7 @@ window.PathPoint = class extends Draggable {
     maxVelocity;
 
 
-    constructor(parentDraggable, relativePosition) {
+    constructor(parentDraggable, relativePosition = new Positioning.Vector2d(0, 0), configuration = {}) {
         let div = document.createElement("div");
         super(div);
         this.div = div;
@@ -71,11 +85,36 @@ window.PathPoint = class extends Draggable {
         this.whiteboard = document.getElementById("whiteboard");
         this.parentDraggable = parentDraggable;
         this.parentDraggable.draggable.appendChild(this.div);
-        this.relativePosition = (relativePosition == null || relativePosition == undefined ? new Positioning.Vector2d(0, 0) : relativePosition);
+        this.relativePosition = relativePosition;
+        this.bindMethods();
+        this.updateFieldVector();
         super.setDraggablePosition(this.relativePosition.add(this.parentDraggable.position));
         super.onDrag = (function() {
             this.relativePosition = this.position.add(new Positioning.Vector2d(-parentDraggable.position.x, -parentDraggable.position.y));
+            this.updateFieldVector();
         }).bind(this);
+
+        this.followRadius = getValue(configuration.followRadius, 8);
+        this.targetFollowRotation = getValue(configuration.targetFollowRotation, null);
+        this.targetEndRotation = getValue(configuration.targetFollowRotation, null);
+        this.maxVelocity = getValue(configuration.maxVelocity, null);
+
+    }
+
+    bindMethods() {
+        this.setFieldPosition = this.setFieldPosition.bind(this);
+    }
+
+    setFieldPosition(fieldVector) {
+        this.fieldVector = fieldVector;
+        let rect = this.parentDraggable.configuration.size;
+        this.relativePosition = new Positioning.Vector2d(fieldVector.y / PathPoint.fieldLengthIn * rect.x, fieldVector.x / PathPoint.fieldLengthIn * rect.y);
+        this.setDraggablePosition(this.relativePosition.add(this.parentDraggable.position));
+    }
+
+    updateFieldVector() {
+        let rect = this.parentDraggable.configuration.size;
+        this.fieldVector = new Positioning.Vector2d(this.relativePosition.y / rect.y * PathPoint.fieldLengthIn, this.relativePosition.x / rect.x * PathPoint.fieldLengthIn);
     }
 
     remove() {
@@ -116,6 +155,7 @@ var Whiteboard = {
             streamSize: undefined,
             selectableNames: undefined,
             fontSize: undefined,
+            followTimeout: undefined,
             pathPoints: [],
         };
 
@@ -174,6 +214,7 @@ var Whiteboard = {
             this.setStreamSize(configuration.streamSize);
             this.selectableGroup = null;
             this.configuration.pathPoints = configuration.pathPoints;
+            this.configuration.followTimeout = configuration.followTimeout;
 
 
             this.configureType(configuration.type, true);
@@ -465,7 +506,26 @@ var Whiteboard = {
             for (let i = 0; i < this.pathPoints.length; i++) {
                 array.push({
                     "relativePosition": this.pathPoints[i].relativePosition,
+                    "configuration": {
+                        "fieldVector": this.pathPoints[i].fieldVector,
+                        "followRadius": this.pathPoints[i].followRadius,
+                        "targetFollowRotation": this.pathPoints[i].targetFollowRotation,
+                        "targetEndRotation": this.pathPoints[i].targetEndRotation,
+                        "maxVelocity": this.pathPoints[i].maxVelocity,
+                    },
+                });
+            }
+            return array;
+        }
+
+        getSendablePath() {
+            let array = [];
+            for (let i = 0; i < this.pathPoints.length; i++) {
+                array.push({
                     "fieldVector": this.pathPoints[i].fieldVector,
+                    "followRadius": this.pathPoints[i].followRadius,
+                    "targetFollowRotation": this.pathPoints[i].targetFollowRotation,
+                    "targetEndRotation": this.pathPoints[i].targetEndRotation,
                 });
             }
             return array;
@@ -502,6 +562,32 @@ var Whiteboard = {
             } catch(error) {
                 console.log(error);
             }
+        }
+
+        addPathPointAfter(pathPointNode) {
+            Whiteboard.logChange();
+            let index = this.getPathPointIndex(pathPointNode);
+            let temp = [];
+            for (let i = 0; i < this.pathPoints.length; i++) {
+                temp.push(this.pathPoints[i])
+                if (i == index) {
+                    temp.push(new PathPoint(this));
+                }
+            }
+            this.pathPoints = temp;
+        }
+
+        addPathPointBefore(pathPointNode) {
+            Whiteboard.logChange();
+            let index = this.getPathPointIndex(pathPointNode);
+            let temp = [];
+            for (let i = 0; i < this.pathPoints.length; i++) {
+                if (i == index) {
+                    temp.push(new PathPoint(this));
+                }
+                temp.push(this.pathPoints[i])
+            }
+            this.pathPoints = temp;
         }
 
         setSize(size) {
@@ -564,6 +650,18 @@ var Whiteboard = {
         }
 
         sendPath() {
+            let data = { message: {} };
+            data.message.configuration = {
+                id: this.configuration.id,
+                path: {
+                    "points": this.getSendablePath(),
+                    "timeout": this.configuration.followTimeout,
+                },
+            };
+            data.message.clientID = Socket.clientID;
+            data.message.messageType = "path update";
+            data = JSON.stringify(data);
+            Socket.sendData(data);
             Notify.createNotice(`sent path "${this.configuration.id}" to the control hub`, "positive", 4000);
         }
 
@@ -614,7 +712,7 @@ var Whiteboard = {
                 this.fieldImg.setAttribute("src", "./game/centerstage.png");
                 if (newObject && this.configuration.pathPoints != undefined) {
                     for (let i = 0; i < this.configuration.pathPoints.length; i++) {
-                        this.pathPoints.push(new PathPoint(this, Positioning.Vector2d.from(this.configuration.pathPoints[i].relativePosition)));
+                        this.pathPoints.push(new PathPoint(this, Positioning.Vector2d.from(this.configuration.pathPoints[i].relativePosition), this.configuration.pathPoints[i].configuration));
                     }
                 }
                 setInterval(this.drawPathLines, 20);
