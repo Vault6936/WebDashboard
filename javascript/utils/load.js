@@ -156,7 +156,6 @@ var Load = {
         Load.handleNotDefaultBtns(key);
         Load.updateCurrentLayout(key.replace(/webdashboard-layout:/, ""));
         Load.clearLayout(logChange = false);
-        Socket.sendLayout();
         try {
             let data = localStorage.getItem(key);
             Load.openJSON(data);
@@ -181,6 +180,7 @@ var Load = {
             let configuration = json.draggableData[i];
             Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(configuration));
         }
+        Socket.sendLayout();
     },
 
     exportJSON: function (key) {
