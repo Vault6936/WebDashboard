@@ -2,12 +2,17 @@ var Load = {
     currentLayout: "default",
 
     listLayoutNames: function () {
-        layoutNames = [];
+        let layoutNames = [];
         for (let i = 0; i < localStorage.length; i++) {
             if (/webdashboard-layout:/.test(localStorage.key(i))) {
-                layoutNames.push(localStorage.key(i).replace(/webdashboard-layout:/, ""));
+                let layoutName = localStorage.key(i).replace(/webdashboard-layout:/, "");
+                if (layoutName !== "default") {
+                    layoutNames.push(layoutName);
+                }
             }
         }
+        layoutNames.sort();
+        layoutNames.unshift("default");
         return layoutNames;
     },
 
@@ -151,6 +156,7 @@ var Load = {
         Load.handleNotDefaultBtns(key);
         Load.updateCurrentLayout(key.replace(/webdashboard-layout:/, ""));
         Load.clearLayout(logChange = false);
+        Socket.sendLayout();
         try {
             let data = localStorage.getItem(key);
             Load.openJSON(data);

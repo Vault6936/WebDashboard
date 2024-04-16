@@ -65,6 +65,7 @@ window.Draggable =  class {
 window.PathPoint = class extends Draggable {    
 
     static fieldLengthIn = 141.345;
+    static size = 24;
 
     parentDraggable;
     relativePosition;
@@ -81,6 +82,9 @@ window.PathPoint = class extends Draggable {
         let div = document.createElement("div");
         super(div);
         this.div = div;
+        this.div.style.width = Positioning.toHTMLPositionPX(PathPoint.size);
+        this.div.style.height = Positioning.toHTMLPositionPX(PathPoint.size);
+        this.div.style.borderRadius = Positioning.toHTMLPositionPX(PathPoint.size / 2);
         this.div.classList.add("path-point");
         this.whiteboard = document.getElementById("whiteboard");
         this.parentDraggable = parentDraggable;
@@ -94,7 +98,7 @@ window.PathPoint = class extends Draggable {
             this.updateFieldVector();
         }).bind(this);
 
-        this.followRadius = getValue(configuration.followRadius, 8);
+        this.followRadius = getValue(configuration.followRadius, 15);
         this.targetFollowRotation = getValue(configuration.targetFollowRotation, null);
         this.targetEndRotation = getValue(configuration.targetFollowRotation, null);
         this.maxVelocity = getValue(configuration.maxVelocity, null);
@@ -108,13 +112,13 @@ window.PathPoint = class extends Draggable {
     setFieldPosition(fieldVector) {
         this.fieldVector = fieldVector;
         let rect = this.parentDraggable.configuration.size;
-        this.relativePosition = new Positioning.Vector2d(fieldVector.y / PathPoint.fieldLengthIn * rect.x, fieldVector.x / PathPoint.fieldLengthIn * rect.y);
+        this.relativePosition = new Positioning.Vector2d(fieldVector.y / PathPoint.fieldLengthIn * rect.x - PathPoint.size / 2, fieldVector.x / PathPoint.fieldLengthIn * rect.y - PathPoint.size / 2);
         this.setDraggablePosition(this.relativePosition.add(this.parentDraggable.position));
     }
 
     updateFieldVector() {
         let rect = this.parentDraggable.configuration.size;
-        this.fieldVector = new Positioning.Vector2d(this.relativePosition.y / rect.y * PathPoint.fieldLengthIn, this.relativePosition.x / rect.x * PathPoint.fieldLengthIn);
+        this.fieldVector = new Positioning.Vector2d((this.relativePosition.y + PathPoint.size / 2) / rect.y * PathPoint.fieldLengthIn, (this.relativePosition.x + PathPoint.size / 2)/ rect.x * PathPoint.fieldLengthIn);
     }
 
     remove() {
@@ -208,6 +212,7 @@ var Whiteboard = {
             this.updateIndex(Whiteboard.draggableRegistry.length);
             this.configuration.name = configuration.name;
             this.configuration.position = configuration.position;
+            //console.log(configuration.position);
             this.setSize(configuration.size);
             this.setFontSize(configuration.fontSize);
             this.setColor(configuration.color);
@@ -275,6 +280,8 @@ var Whiteboard = {
             this.drawPathLines = this.drawPathLines.bind(this);
             this.getPathPointsSimpleObj = this.getPathPointsSimpleObj.bind(this);
             this.removePathPoint = this.removePathPoint.bind(this);
+            this.removeAllPathPoints = this.removeAllPathPoints.bind(this);
+            this.mirrorPath = this.mirrorPath.bind(this);
         }
 
         generateSelectorHTML(selectableNames) {
@@ -333,13 +340,26 @@ var Whiteboard = {
 
         drawPathLines() {
             this.context.clearRect(0, 0, (this.configuration.size.x), (this.configuration.size.y));
+            this.pathPoints[0].div.style.backgroundColor = "limegreen";
+            this.pathPoints[this.pathPoints.length - 1].div.style.backgroundColor = "red";
             for (let i = 0; i < this.pathPoints.length - 1; i++) {
                 let point1 = this.pathPoints[i]; 
+                if (i != 0) {
+                    point1.div.style.backgroundColor = "#f5770a";
+                }
                 let vector1 = point1.position.add(new Positioning.Vector2d(point1.div.getBoundingClientRect().width / 2, point1.div.getBoundingClientRect().height / 2));
                 let point2 = this.pathPoints[i + 1];
                 let vector2 = point2.position.add(new Positioning.Vector2d(point2.div.getBoundingClientRect().width / 2, point2.div.getBoundingClientRect().height / 2));
                 this.drawLine(vector1.add(new Positioning.Vector2d(-this.position.x, -this.position.y)), vector2.add(new Positioning.Vector2d(-this.position.x, -this.position.y)), "#f5770a", 5);
             }
+        }
+
+        reversePathOrder() {
+            let temp = [];
+            for (let i = 0; i < this.pathPoints.length; i++) {
+                temp.push(this.pathPoints[this.pathPoints.length - 1 - i]);
+            }
+            this.pathPoints = temp;
         }
 
         drawGraph(botX, botY, heading) {
@@ -564,6 +584,13 @@ var Whiteboard = {
             }
         }
 
+        removeAllPathPoints() {
+            for (let i = 0; i < this.pathPoints.length; i++) {
+                this.div.removeChild(this.pathPoints[i].draggable);
+            }
+            this.pathPoints = [];
+        }
+
         addPathPointAfter(pathPointNode) {
             Whiteboard.logChange();
             let index = this.getPathPointIndex(pathPointNode);
@@ -591,23 +618,26 @@ var Whiteboard = {
         }
 
         setSize(size) {
-            this.configuration.size = new Positioning.Vector2d(Positioning.clamp(size.x, 50, this.whiteboard.clientWidth * 0.75), Positioning.clamp(size.y, 50, this.whiteboard.clientHeight * 0.75));
+            this.configuration.size = new Positioning.Vector2d(Positioning.clamp(size.x, 50, this.whiteboard.clientWidth * 0.85), Positioning.clamp(size.y, 50, this.whiteboard.clientHeight * 0.85));
             this.div.style.width = Positioning.toHTMLPositionPX(this.configuration.size.x);
             this.div.style.height = Positioning.toHTMLPositionPX(this.configuration.size.y);
             this.label.style.width = Positioning.toHTMLPositionPX(Positioning.clamp(this.configuration.size.x * 0.75, 75, Number.POSITIVE_INFINITY));
             Whiteboard.dragOffset = new Positioning.Vector2d(0, 0); // Calling setPosition() will take into account the dragOffset variable.  This isn't desirable here, so it is set to (0, 0)
             this.setPosition(this.configuration.position); // If this method is not called, the position of the label relative to that of the div will be wrong
             if (this.isType(Whiteboard.WhiteboardDraggable.Types.GRAPH) || this.isType(Whiteboard.WhiteboardDraggable.Types.PATH)) {
+                this.canvas.style.width = Positioning.toHTMLPositionPX(this.configuration.size.x);
+                this.canvas.style.height = Positioning.toHTMLPositionPX(this.configuration.size.y);
+                this.canvas.width = this.configuration.size.x;
+                this.canvas.height = this.configuration.size.y;
                 if (this.isType(Whiteboard.WhiteboardDraggable.Types.GRAPH)) {
                     this.drawGraph(0, 0, 0);
                 } else if (Whiteboard.WhiteboardDraggable.Types.PATH) {
                     this.fieldImg.style.width = Positioning.toHTMLPositionPX(this.configuration.size.x);
                     this.fieldImg.style.height = Positioning.toHTMLPositionPX(this.configuration.size.y);
+                    for (let i = 0; i < this.pathPoints.length; i++) {
+                        this.pathPoints[i].setFieldPosition(this.pathPoints[i].fieldVector);
+                    }
                 }
-                this.canvas.style.width = Positioning.toHTMLPositionPX(this.configuration.size.x);
-                this.canvas.style.height = Positioning.toHTMLPositionPX(this.configuration.size.y);
-                this.canvas.width = this.configuration.size.x;
-                this.canvas.height = this.configuration.size.y;
             }
         }
 
@@ -617,6 +647,7 @@ var Whiteboard = {
             }
             this.configuration.fontSize = size;
             this.textContainer.style.fontSize = Positioning.toHTMLPositionPX(size);
+            this.textField.style.fontSize = Positioning.toHTMLPositionPX(size);
         }
 
         setColor(color) {
@@ -633,7 +664,6 @@ var Whiteboard = {
                     for (let i = layer; i > this.configuration.layer; i--) {
                         Whiteboard.draggableRegistry[i].setLayer(i - 1, false);
                         Whiteboard.draggableRegistry[i].setLayer(i - 1, false);
-                        console.log(Whiteboard.draggableRegistry[i]);
                     }
                 } else {
                     for (let i = layer; i < this.configuration.layer; i++) {
@@ -649,6 +679,13 @@ var Whiteboard = {
             this.sendState();
         }
 
+        mirrorPath() {
+            Whiteboard.logChange();
+            for (let i = 0; i < this.pathPoints.length; i++) {
+                this.pathPoints[i].setFieldPosition(new Positioning.Vector2d(this.pathPoints[i].fieldVector.x, PathPoint.fieldLengthIn - this.pathPoints[i].fieldVector.y))
+            }
+        }
+
         sendPath() {
             let data = { message: {} };
             data.message.configuration = {
@@ -662,7 +699,19 @@ var Whiteboard = {
             data.message.messageType = "path update";
             data = JSON.stringify(data);
             Socket.sendData(data);
-            Notify.createNotice(`sent path "${this.configuration.id}" to the control hub`, "positive", 4000);
+        }
+
+        sendInput() {
+            let data = { message: {} };
+            data.message.configuration = {
+                id: this.configuration.id,
+                input: this.configuration.state,
+            };
+            data.message.clientID = Socket.clientID;
+            data.message.messageType = "value update";
+            data = JSON.stringify(data);
+            Socket.sendData(data);
+            Notify.createNotice(`sent input value to the control hub`, "positive", 4000);
         }
 
         configureType(type, newObject = false) {
@@ -789,9 +838,9 @@ var Whiteboard = {
     },
 
     duplicate: function (draggable, keepPosition = false) {
-        let position = new Positioning.Vector2d(0, 0);
+        let myPosition = new Positioning.Vector2d(0, 0);
         if (keepPosition) {
-            position = draggable.configuration.position;
+            myPosition = draggable.configuration.position;
         }
         let name;
         try {
@@ -799,17 +848,13 @@ var Whiteboard = {
         } catch {
             name = draggable.configuration.name;
         }
-        let configuration = {
-            "name": name,
-            "position": position,
-            "size": draggable.configuration.size,
-            "color": draggable.configuration.color,
-            "layer": Whiteboard.draggableRegistry.length,
-            "type": draggable.configuration.type,
-            "state": "",
-            "id": null,
-        };
-        Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(configuration));
+        let newConfiguration = structuredClone(draggable.configuration);
+        newConfiguration.position = myPosition;
+        newConfiguration.name = name;
+        newConfiguration.id = "";
+        newConfiguration.pathPoints = draggable.getPathPointsSimpleObj();
+        newConfiguration.layer = Whiteboard.draggableRegistry.length;
+        Whiteboard.draggableRegistry.push(new Whiteboard.WhiteboardDraggable(newConfiguration));
     },
 
     getDraggableAncestor: function (element, recursion) {

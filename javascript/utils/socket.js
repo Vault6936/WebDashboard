@@ -3,6 +3,7 @@ var Socket = {
     lastMessageTimestamp: 0,
     connecting: false,
     connected: false,
+    log: "",
 
     initializeSocket: function () {
         setInterval(() => { try { Socket.websocket.send("ping") } catch { } }, 5000);
@@ -18,11 +19,11 @@ var Socket = {
 
     sendLayout: function () {
         data = { 
-            message,
-            id, 
+            message: {},
         };
         data.message.layout = Load.getLayoutJSON().draggableData;
         data.message.messageType = "layout state";
+        data.message.id = WhiteboardSettings.dashboardID;
         data = JSON.stringify(data);
         Socket.sendData(data);
     },
@@ -36,6 +37,10 @@ var Socket = {
     },
 
     openSocket: function (recursion) {
+        let log = localStorage.getItem("webdashboard-log");
+        if (log != undefined) {
+            Socket.log = log;
+        }
         if (recursion == 0) {
             Socket.connecting = true;
             Notify.createNotice("Attempting to connect to the robot...", "neutral", 3000);
@@ -53,7 +58,7 @@ var Socket = {
             document.getElementById("status").innerHTML = "connected";
             Socket.sendLayout();
         };
-        Socket.websocket.onmessage = (event) => { Socket.handleMessage(event.data) };
+        Socket.websocket.onmessage = (event) => { Socket.handleMessage(JSON.parse(event.data)) };
         if (recursion < 1) {
             Socket.websocket.onerror = () => { Notify.createNotice("Could not connect to the robot!", "negative", 8000); Socket.openSocket(recursion + 1); /*console.clear()*/ };
         } else {
@@ -69,16 +74,28 @@ var Socket = {
         Socket.lastMessageTimestamp = Date.now();
         if (data.messageType === "update") {
             try {
-                data = JSON.parse(data);
                 Whiteboard.getDraggableById(data.nodeID).setState(data.state);
-            } catch {
+            } catch (error) {
                 console.warn(`The server attemped to set the state of a node with id "${data.nodeID}," which does not exist.`);
-                Notify.createNotice("Received invalid message from the robot", "negative", 3000);
             }
         } else if (data.messageType === "notify") {
             Notify.createNotice(data.message, data.type, parseInt(data.duration));
+        } else if (data.messageType === "reset log") {
+            Socket.log = "";
+        } else if (data.messageType === "log") {
+            Socket.log += "\n" + data.value;
+            localStorage.setItem("webdashboard-log", log);
         }
     },
+
+    downloadRobotLog: function() {
+        const file = new File([Socket.log], "log.txt", { type: 'text/plain' });
+        const fileUrl = URL.createObjectURL(file);
+        let anchor = document.createElement("a");
+        anchor.href = fileUrl;
+        anchor.target = "blank";
+        anchor.click();
+    }
 
 };
 

@@ -157,6 +157,7 @@ var PopupTasks = {
     },
 
     configurePathPoint: function(event) {
+        Whiteboard.logChange();
         let popup = Popup.getPopupFromChild(event.target);
         let pathPoint = Whiteboard.currentPathPoint;
         let x = parseFloat(Popup.getInput("path-point-x").value);

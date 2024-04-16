@@ -143,7 +143,13 @@ function generateContextMenu(event) {
         let draggable = Whiteboard.draggableRegistry[Whiteboard.getDraggableIndex(draggableElement)]
         Whiteboard.currentDraggable = draggable;
 
-        if (!event.target.classList.contains("path-point")) {
+        if (event.target.classList.contains("path-point")) {
+            Whiteboard.currentPathPoint = draggable.getPathPointObject(event.target);
+            generateContextMenuButton(container, "remove", () => draggable.removePathPoint(event.target));
+            generateContextMenuButton(container, "add after", (() => draggable.addPathPointAfter(event.target)));
+            generateContextMenuButton(container, "add before", () => draggable.addPathPointBefore(event.target));
+            generateContextMenuButton(container, "configure", () => Popup.openPopup("path-point-configuration"));
+        } else {
             if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY)) {
                 generateContextMenuButton(container, "copy data", () => {navigator.clipboard.writeText(draggable.configuration.state); Notify.createNotice("copied", "positive", 3000)});
             }
@@ -152,14 +158,17 @@ function generateContextMenu(event) {
                 generateContextMenuButton(container, "send to front", () => { Whiteboard.logChange(); draggable.setLayer(Whiteboard.draggableRegistry.length - 1) });
                 generateContextMenuButton(container, "send to back", () => { Whiteboard.logChange(); draggable.setLayer(0) });
                 generateContextMenuButton(container, "set id", () => Popup.openPopup("id-changer"));
-                if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY)) {
-                    generateContextMenuButton(container, "set font size", () => Popup.openPopup("text-telemetry-font-size-setter"));
-                }
                 if (!draggable.isType(Whiteboard.WhiteboardDraggable.Types.TOGGLE) && !draggable.isType(Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY)) {
                     generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
                 }
+                if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.TEXT_TELEMETRY) || draggable.isType(Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT)) {
+                    generateContextMenuButton(container, "set font size", () => Popup.openPopup("text-telemetry-font-size-setter"));
+                }
                 generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
                 generateContextMenuButton(container, "set position", () => Popup.openPopup("position-setter"));
+                if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) || draggable.isType(Whiteboard.WhiteboardDraggable.Types.TOGGLE)) {
+                    generateContextMenuButton(container, "save to robot", () => draggable.sendInput());
+                }
                 if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.SELECTOR)) {
                     generateContextMenuButton(container, "define selectables", () => Popup.openPopup("draggable-selector-creator"));
                 }
@@ -168,33 +177,30 @@ function generateContextMenu(event) {
                     generateContextMenuButton(container, "set stream size", () => Popup.openPopup("stream-size-setter"));
                 }
                 if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.PATH)) {
+                    generateContextMenuButton(container, "clear path", () => draggable.removeAllPathPoints());
                     generateContextMenuButton(container, "add path point", () => draggable.addPathPoint());
                     generateContextMenuButton(container, "set path timeout", () => Popup.openPopup("path-timeout-setter"));
+                    generateContextMenuButton(container, "mirror path", () => draggable.mirrorPath());
+                    generateContextMenuButton(container, "reverse", () => draggable.reversePathOrder());
                     generateContextMenuButton(container, "save to robot", () => draggable.sendPath());
                 }
                 generateContextMenuButton(container, "set element type", () => Popup.openPopup("type-setter"));
                 generateContextMenuButton(container, "duplicate", () => Whiteboard.duplicate(Whiteboard.draggableRegistry[Whiteboard.getDraggableIndex(Whiteboard.currentDraggable.div)]));
             }
-        } else if (event.target.id == "whiteboard-border") {
-            generateContextMenuButton(container, "set whiteboard size", () => { Popup.openPopup("whiteboard-size-setter") });
-        } else if (event.target.classList.contains("selectable")) {
-            if (event.target.classList.contains("layout-selectable")) {
-                Popup.selected = event.target;
-                if (event.target.innerHTML !== "default") {
-                    generateContextMenuButton(container, "delete", () => { Load.targetLayout = event.target.innerHTML; Popup.openPopup("remove-layout") });
-                    generateContextMenuButton(container, "rename", () => { Popup.openPopup("layout-renamer") });
-                    generateContextMenuButton(container, "set as default", () => { Load.setAsDefault(`webdashboard:${event.target.innerHTML}`) });
-                }
-                generateContextMenuButton(container, "export json", () => { Load.exportJSON(`webdashboard:${event.target.innerHTML}`) });
-            }
-        } else {
-            Whiteboard.currentPathPoint = draggable.getPathPointObject(event.target);
-            generateContextMenuButton(container, "remove", () => draggable.removePathPoint(event.target));
-            generateContextMenuButton(container, "add after", (() => draggable.addPathPointAfter(event.target)));
-            generateContextMenuButton(container, "add before", () => draggable.addPathPointBefore(event.target));
-            generateContextMenuButton(container, "configure", () => Popup.openPopup("path-point-configuration"));
         }
-    }
+    } else if (event.target.id === "whiteboard-border") {
+        generateContextMenuButton(container, "set whiteboard size", () => { Popup.openPopup("whiteboard-size-setter") });
+    } else if (event.target.classList.contains("selectable")) {
+        if (event.target.classList.contains("layout-selectable")) {
+            Popup.selected = event.target;
+            if (event.target.innerHTML !== "default") {
+                generateContextMenuButton(container, "delete", () => { Load.targetLayout = event.target.innerHTML; Popup.openPopup("remove-layout") });
+                generateContextMenuButton(container, "rename", () => { Popup.openPopup("layout-renamer") });
+                generateContextMenuButton(container, "set as default", () => { Load.setAsDefault(`webdashboard:${event.target.innerHTML}`) });
+            }
+            generateContextMenuButton(container, "export json", () => { Load.exportJSON(`webdashboard:${event.target.innerHTML}`) });
+        }
+    } 
     document.body.appendChild(container);
     let x = Positioning.toHTMLPositionPX(Positioning.clamp(Positioning.mousePosition.x, 25, whiteboard.clientWidth - container.clientWidth - 25));
     let y = Positioning.toHTMLPositionPX(Positioning.clamp(Positioning.mousePosition.y, 65, whiteboard.clientHeight - container.clientHeight - 25));

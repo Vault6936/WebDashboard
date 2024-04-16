@@ -83,9 +83,9 @@ var WhiteboardSettings = {
 
     saveSettings: function (event) {
         let popup = Popup.getPopupFromChild(event.target);
-        WhiteboardSettings.dashboardID = Popup.getInputValue("dashboard-id");
         WhiteboardSettings.teamNumber = Popup.getInputValue("team-number");
         WhiteboardSettings.websocketURL = Popup.getInputValue("websocket-url");
+        WhiteboardSettings.dashboardID = Popup.getInputValue("dashboard-id");
         localStorage.setItem("webdashboard-settings", JSON.stringify(WhiteboardSettings));
         Popup.closePopup(popup);
     },
