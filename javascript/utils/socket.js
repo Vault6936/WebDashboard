@@ -84,7 +84,7 @@ var Socket = {
             Socket.log = "";
         } else if (data.messageType === "log") {
             Socket.log += "\n" + data.value;
-            localStorage.setItem("webdashboard-log", log);
+            localStorage.setItem("webdashboard-log", Socket.log);
         }
     },
 

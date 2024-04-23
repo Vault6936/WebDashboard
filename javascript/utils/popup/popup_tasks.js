@@ -133,13 +133,26 @@ var PopupTasks = {
         Popup.closePopup(popup);
     },
 
+    populatePositionInfo: function() {
+        Popup.getInput("x-pose-input").value = Whiteboard.currentDraggable.configuration.position.x;
+        Popup.getInput("y-pose-input").value = Whiteboard.currentDraggable.configuration.position.y;
+    },
+
     populatePathPointInfo: function() {
         let pathPoint = Whiteboard.currentPathPoint;
         Popup.getInput("path-point-x").value = pathPoint.fieldVector.x;
         Popup.getInput("path-point-y").value = pathPoint.fieldVector.y;
         Popup.getInput("path-point-radius").value = pathPoint.followRadius;
-        Popup.getInput("target-follow-rotation").value = pathPoint.targetFollowRotation;
-        Popup.getInput("target-end-rotation").value = pathPoint.targetEndRotation;
+        if (pathPoint.targetFollowRotation == null) {
+            Popup.getInput("target-follow-rotation").value = "NaN";
+        } else { 
+            Popup.getInput("target-follow-rotation").value = pathPoint.targetFollowRotation * 180 / 3.14159
+        };
+        if (pathPoint.targetEndRotation == null) {
+            Popup.getInput("target-end-rotation").value = "NaN";
+        } else { 
+            Popup.getInput("target-end-rotation").value = pathPoint.targetEndRotation * 180 / 3.14159
+        };
         Popup.getInput("max-velocity").value = pathPoint.maxVelocity;
     },
 

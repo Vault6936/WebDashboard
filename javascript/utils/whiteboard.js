@@ -1,14 +1,3 @@
-window.hasValue = function(variable) {
-    return variable != undefined && variable != null;
-}
-
-window.getValue = function(value, defaultValue) {
-    if (hasValue(value)) {
-        return value;
-    }
-    return defaultValue;
-}
-
 window.Draggable =  class {
     draggable;
     draggingNode;
@@ -98,7 +87,7 @@ window.PathPoint = class extends Draggable {
             this.updateFieldVector();
         }).bind(this);
 
-        this.followRadius = getValue(configuration.followRadius, 15);
+        this.followRadius = getValue(configuration.followRadius, 8);
         this.targetFollowRotation = getValue(configuration.targetFollowRotation, null);
         this.targetEndRotation = getValue(configuration.targetFollowRotation, null);
         this.maxVelocity = getValue(configuration.maxVelocity, null);
@@ -161,6 +150,7 @@ var Whiteboard = {
             fontSize: undefined,
             followTimeout: undefined,
             pathPoints: [],
+            showLabel: true,
         };
 
         constructor(configuration) {
@@ -212,7 +202,6 @@ var Whiteboard = {
             this.updateIndex(Whiteboard.draggableRegistry.length);
             this.configuration.name = configuration.name;
             this.configuration.position = configuration.position;
-            //console.log(configuration.position);
             this.setSize(configuration.size);
             this.setFontSize(configuration.fontSize);
             this.setColor(configuration.color);
@@ -220,6 +209,8 @@ var Whiteboard = {
             this.selectableGroup = null;
             this.configuration.pathPoints = configuration.pathPoints;
             this.configuration.followTimeout = configuration.followTimeout;
+            this.configuration.showLabel = getValue(configuration.showLabel, true);
+            this.displayLabel();
 
 
             this.configureType(configuration.type, true);
@@ -282,6 +273,8 @@ var Whiteboard = {
             this.removePathPoint = this.removePathPoint.bind(this);
             this.removeAllPathPoints = this.removeAllPathPoints.bind(this);
             this.mirrorPath = this.mirrorPath.bind(this);
+            this.displayLabel = this.displayLabel.bind(this);
+            this.toggleLabel = this.toggleLabel.bind(this);
         }
 
         generateSelectorHTML(selectableNames) {
@@ -491,6 +484,20 @@ var Whiteboard = {
             }
         }
 
+        displayLabel() {
+            if (this.configuration.showLabel) {
+                this.label.style.display = "block";
+            } else {
+                this.label.style.display = "none";
+            }
+        }
+
+        toggleLabel() {
+            this.configuration.showLabel = !this.configuration.showLabel;
+            this.displayLabel();
+            this.setPosition(this.configuration.position);
+        }
+
         setName(name) {
             this.configuration.name = name;
         }
@@ -682,7 +689,8 @@ var Whiteboard = {
         mirrorPath() {
             Whiteboard.logChange();
             for (let i = 0; i < this.pathPoints.length; i++) {
-                this.pathPoints[i].setFieldPosition(new Positioning.Vector2d(this.pathPoints[i].fieldVector.x, PathPoint.fieldLengthIn - this.pathPoints[i].fieldVector.y))
+                let pathPoint = this.pathPoints[i];
+                pathPoint.setFieldPosition(new Positioning.Vector2d(pathPoint.fieldVector.x, PathPoint.fieldLengthIn - pathPoint.fieldVector.y))
             }
         }
 
@@ -724,6 +732,7 @@ var Whiteboard = {
             this.canvas.style.display = "none";
             this.fieldImg.style.display = "none";
             clearInterval(this.drawPathLines, 20);
+            clearInterval(this.sendState, 1000);
             if (this.configuration.type != type && this.configuration.type != undefined) {
                 this.configuration.state = "";
             }
@@ -744,6 +753,7 @@ var Whiteboard = {
             } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) {
                 this.textField.style.display = "block";
                 this.textField.innerHTML = this.configuration.state;
+                setInterval(this.sendState, 1000);
             } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY) {
                 this.setColor("red");
             } else if (this.configuration.type === Whiteboard.WhiteboardDraggable.Types.CAMERA_STREAM) {

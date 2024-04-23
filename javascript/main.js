@@ -32,7 +32,7 @@ function initialize() { // This is called when the body portion of the html docu
     Popup.generateSimpleInputPopup("whiteboard-size-setter", PopupTasks.setWhiteBoardBorderSize, new Popup.PopupInput("750x500", "border size"));
     Popup.generateSimpleInputPopup("size-picker", PopupTasks.setDraggableSize, new Popup.PopupInput("100x100", "draggable size"));
     Popup.generateSimpleInputPopup("color-picker", PopupTasks.changeColor, new Popup.PopupInput("#ffffff", "draggable color"));
-    Popup.generateSimpleInputPopup("id-changer", PopupTasks.changeID, new Popup.PopupInput("Enter draggable id", "draggable id"));
+    Popup.generateSimpleInputPopup("id-changer", PopupTasks.changeID, new Popup.PopupInput("Enter draggable id", "draggable id", "draggable-id"));
     Popup.generateSimpleInputPopup("stream-url-setter", PopupTasks.setStreamURL, new Popup.PopupInput("http://roborio-TEAM-frc.local:1181/?action=stream", "set stream url", "stream-url-input"));
     Popup.generateSimpleInputPopup("stream-size-setter", PopupTasks.setStreamSize, new Popup.PopupInput("width x height", "stream size"));
     Popup.generateSimpleInputPopup("text-telemetry-font-size-setter", PopupTasks.setFontSize, new Popup.PopupInput("15", "font size"));
@@ -58,10 +58,10 @@ function initialize() { // This is called when the body portion of the html docu
     Popup.populateVerticalInputs(document.getElementById("point-configure-inputs"),
         new Popup.PopupInput("", "x (in)", "path-point-x"),
         new Popup.PopupInput("", "y (in)", "path-point-y"),
-        new Popup.PopupInput("", "radius (in)", "path-point-radius"),
+        new Popup.PopupInput("", "follow radius (in)", "path-point-radius"),
         new Popup.PopupInput("", "target follow rotation (degrees)", "target-follow-rotation"),
         new Popup.PopupInput("", "target end rotation (degrees)", "target-end-rotation"),
-        new Popup.PopupInput("", "max velocity (in/sec)", "max-velocity"),
+        new Popup.PopupInput("", "max velocity (%)", "max-velocity"),
     );
 
     Popup.initializePopups();
@@ -75,17 +75,24 @@ function addEventListeners() {
         if ((event.ctrlKey || event.metaKey)) { //meta key is for MacOS
             if (event.key == "s") {
                 event.preventDefault();
-                Load.defaultSave();
+                if (event.shiftKey) {
+                    Popup.openPopup("Load-layout-as");
+                } else {
+                    Load.defaultSave();
+                }
                 Notify.createNotice("Layout saved!", "positive", 3000);
-            } else if (event.key == "z") {
+            } else if (event.key === "z") {
                 Whiteboard.undoChange();
-            } else if (event.key == "y") {
+            } else if (event.key === "y") {
                 Whiteboard.redoChange();
-            } else if (event.key == "e") {
+            } else if (event.key === "e") {
                 event.preventDefault();
                 if (!inFullScreen()) {
                     Whiteboard.toggleEditingMode();
                 }
+            } else if (event.key === "q" && Whiteboard.editingMode) {
+                event.preventDefault();
+                Whiteboard.addDefaultDraggable();
             }
         }
     });
@@ -155,9 +162,14 @@ function generateContextMenu(event) {
             }
             if (Whiteboard.editingMode) {
                 generateContextMenuButton(container, "remove", () => { if (Whiteboard.editingMode) { Whiteboard.logChange(); draggable.delete() } });
+                if (draggable.configuration.showLabel) {
+                    generateContextMenuButton(container, "hide label", () => { if (Whiteboard.editingMode) { Whiteboard.logChange(); draggable.toggleLabel() } });
+                } else {
+                    generateContextMenuButton(container, "show label", () => { if (Whiteboard.editingMode) { Whiteboard.logChange(); draggable.toggleLabel() } });
+                }
                 generateContextMenuButton(container, "send to front", () => { Whiteboard.logChange(); draggable.setLayer(Whiteboard.draggableRegistry.length - 1) });
                 generateContextMenuButton(container, "send to back", () => { Whiteboard.logChange(); draggable.setLayer(0) });
-                generateContextMenuButton(container, "set id", () => Popup.openPopup("id-changer"));
+                generateContextMenuButton(container, "set id", () => {Popup.openPopup("id-changer"); Popup.getInput("draggable-id").value = draggable.configuration.id});
                 if (!draggable.isType(Whiteboard.WhiteboardDraggable.Types.TOGGLE) && !draggable.isType(Whiteboard.WhiteboardDraggable.Types.BOOLEAN_TELEMETRY)) {
                     generateContextMenuButton(container, "set color", () => Popup.openPopup("color-picker"));
                 }
@@ -165,7 +177,7 @@ function generateContextMenu(event) {
                     generateContextMenuButton(container, "set font size", () => Popup.openPopup("text-telemetry-font-size-setter"));
                 }
                 generateContextMenuButton(container, "set size", () => Popup.openPopup("size-picker"));
-                generateContextMenuButton(container, "set position", () => Popup.openPopup("position-setter"));
+                generateContextMenuButton(container, "set position", () => {Popup.openPopup("position-setter"); PopupTasks.populatePositionInfo()});
                 if (draggable.isType(Whiteboard.WhiteboardDraggable.Types.TEXT_INPUT) || draggable.isType(Whiteboard.WhiteboardDraggable.Types.TOGGLE)) {
                     generateContextMenuButton(container, "save to robot", () => draggable.sendInput());
                 }
